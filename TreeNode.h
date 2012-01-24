@@ -30,6 +30,7 @@ private:
 		}
 	};
 	int bestIndex;
+	double greaterSqrSumDifference;
 	double bestValue;
 };
 
