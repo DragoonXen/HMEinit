@@ -5,6 +5,7 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <vector>
+#include "RegressionTree.h"
 
 using namespace std;
 char line[5000];
@@ -27,6 +28,7 @@ int main(int argc, char* argv[]) {
 	}
 	f.close();
 
+	RegressionTree tree(inputMatrix);
 
 	return 0;
 }
