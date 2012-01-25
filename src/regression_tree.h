@@ -12,12 +12,14 @@
 
 class RegressionTree {
 public:
+	RegressionTree(std::vector<std::vector<double>*> *rows, int max_nodes_count);
 	RegressionTree(std::vector<std::vector<double>*> *rows);
 	~RegressionTree();
 
 private:
 	void init(std::vector<std::vector<double>*> *rows);
 	TreeNode *root_node_;
+	int max_nodes_count_;
 };
 
 #endif /* REGRESSIONTREE_H_ */

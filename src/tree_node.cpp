@@ -8,8 +8,10 @@
 #include "tree_node.h"
 
 #include <algorithm>
+#include <iostream>
 
 TreeNode::TreeNode(std::vector<std::vector<double>*> *rows) {
+	std::cout<<"rows: "<<rows->size()<<std::endl;
 	left_child_ = NULL;
 	right_child_ = NULL;
 	rows_ = rows;
@@ -17,13 +19,12 @@ TreeNode::TreeNode(std::vector<std::vector<double>*> *rows) {
 }
 
 TreeNode::~TreeNode() {
-	left_child_->~TreeNode();
-	right_child_->~TreeNode();
+	delete(left_child_);
+	delete(right_child_);
 	if (rows_ != NULL) {
 		for (uint i = 0; i != rows_->size(); i++) {
 			delete (rows_->at(i));
 		}
-		rows_->clear();
 		delete (rows_);
 	}
 }
@@ -116,7 +117,6 @@ void TreeNode::split_node() {
 		idx++;
 	}
 
-	rows_->clear();
 	delete (rows_);
 	rows_ = NULL;
 

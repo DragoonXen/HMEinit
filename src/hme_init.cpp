@@ -25,7 +25,7 @@ int main(int argc, char* argv[]) {
 	}
 	f.close();
 
-	RegressionTree tree(input_matrix);
+	RegressionTree tree(input_matrix, 50);
 
 	return 0;
 }
