@@ -5,10 +5,10 @@
  *      Author: dragoon
  */
 
-#include "RegressionTree.h"
+#include "regression_tree.h"
 
 RegressionTree::RegressionTree(vector<vector<double>* > &rows) {
-	rootNode = new TreeNode(rows);
+	root_node = new TreeNode(rows);
 }
 
 RegressionTree::~RegressionTree() {

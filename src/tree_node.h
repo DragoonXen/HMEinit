@@ -7,31 +7,28 @@
 
 #ifndef TREENODE_H_
 #define TREENODE_H_
-#include <vector>
-#include <algorithm>
-#include <functional>
 
-using namespace std;
+#include <vector>
+#include <functional>
 
 class TreeNode {
 public:
-	TreeNode(vector<vector<double>*> &rows);
+	TreeNode(std::vector<std::vector<double>*> &rows);
 	virtual ~TreeNode();
 
-
 private:
-	struct RowsCompare : public binary_function<vector<double>*,vector<double>*,bool>{
+	struct RowsCompare: public std::binary_function<std::vector<double>*, std::vector<double>*, bool> {
 		int idx;
 		RowsCompare(int idx) {
 			this->idx = idx;
 		}
-		inline bool operator()(const vector<double>* a, const vector<double>* b) {
+		inline bool operator()(const std::vector<double>* a, const std::vector<double>* b) {
 			return a->at(idx) < b->at(idx);
 		}
 	};
-	int bestIndex;
-	double greaterSqrSumDifference;
-	double bestValue;
+	int best_index;
+	double greater_sqr_sum_difference;
+	double best_split_value;
 };
 
 #endif /* TREENODE_H_ */

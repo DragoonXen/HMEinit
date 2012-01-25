@@ -5,14 +5,14 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <vector>
-#include "RegressionTree.h"
+#include "regression_tree.h"
 
 using namespace std;
 char line[5000];
 
 int main(int argc, char* argv[]) {
 	ifstream f(argv[argc - 1]);
-	vector<vector<double>*> inputMatrix;
+	vector<vector<double>*> input_matrix;
 	while (f.getline(line, 5000)) {
 		stringstream sstr;
 		sstr << line;
@@ -21,14 +21,14 @@ int main(int argc, char* argv[]) {
 		while (sstr >> tmp) {
 			row->push_back(tmp);
 		}
-		if (inputMatrix.size()) {
-			assert(inputMatrix[0]->size() == row->size());
+		if (input_matrix.size()) {
+			assert(input_matrix[0]->size() == row->size());
 		}
-		inputMatrix.push_back(row);
+		input_matrix.push_back(row);
 	}
 	f.close();
 
-	RegressionTree tree(inputMatrix);
+	RegressionTree tree(input_matrix);
 
 	return 0;
 }

@@ -8,7 +8,7 @@
 #ifndef REGRESSIONTREE_H_
 #define REGRESSIONTREE_H_
 #include <vector>
-#include "TreeNode.h"
+#include "tree_node.h"
 
 using namespace std;
 
@@ -17,7 +17,7 @@ public:
 	RegressionTree(vector<vector<double>* > &rows);
 	~RegressionTree();
 private:
-	TreeNode *rootNode;
+	TreeNode *root_node;
 };
 
 #endif /* REGRESSIONTREE_H_ */
