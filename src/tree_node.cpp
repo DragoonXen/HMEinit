@@ -10,7 +10,6 @@
 #include <algorithm>
 
 TreeNode::TreeNode(std::vector<std::vector<double>*> *rows) {
-	tree_nodes_count++;
 	left_child_ = NULL;
 	right_child_ = NULL;
 	rows_ = rows;
@@ -29,10 +28,6 @@ TreeNode::~TreeNode() {
 	}
 }
 
-double TreeNode::sum_sqr_difference() {
-	return sum_sqr_difference_;
-}
-
 TreeNode* TreeNode::left_child() {
 	return left_child_;
 }
@@ -41,9 +36,18 @@ TreeNode* TreeNode::right_child() {
 	return right_child_;
 }
 
+double TreeNode::sum_sqr_difference() {
+	return sum_sqr_difference_;
+}
+
+double TreeNode::sum_sqr_improvement() {
+	return sum_sqr_improvement_;
+}
+
 void TreeNode::init() {
 	split_value_ = 0;
 	split_index_ = -1;
+	sum_sqr_improvement_ = 0;
 
 	double all_sum = 0;
 	double all_sum_sqrs = 0;
@@ -52,14 +56,16 @@ void TreeNode::init() {
 		all_sum_sqrs += rows_->at(i)->at(0) * rows_->at(i)->at(0);
 	}
 
-	double avg_value = all_sum / rows_->size();
-	sum_sqr_difference_ = avg_value * avg_value * rows_->size() + all_sum_sqrs
-			- 2 * avg_value * all_sum;
+	avg_value_ = all_sum / rows_->size();
+	sum_sqr_difference_ = avg_value_ * avg_value_ * rows_->size() + all_sum_sqrs
+			- 2 * avg_value_ * all_sum;
+	// no reason to search slit node if all learn samples have same value
+	if (sum_sqr_difference_ == 0){
+		return;
+	}
+
 	int columns_count = rows_->at(0)->size();
 	double min_leafes_sum_sqr_difference = sum_sqr_difference_;
-	// no reason to slit node if all learn samples have same value
-	if (sum_sqr_difference_ == 0)
-		return;
 
 	//find best dividing onto two parts
 	for (int i = 1; i != columns_count; i++) {
@@ -90,9 +96,7 @@ void TreeNode::init() {
 			}
 		}
 	}
-	if (sum_sqr_difference_ - min_leafes_sum_sqr_difference > 1) { //if find any point to split
-		split_node();
-	}
+	sum_sqr_improvement_ = sum_sqr_difference_ - min_leafes_sum_sqr_difference;
 }
 
 void TreeNode::split_node() {
@@ -106,6 +110,7 @@ void TreeNode::split_node() {
 		left_leaf_rows->push_back(rows_->at(idx));
 		idx++;
 	}
+
 	while (idx != rows_->size()) {
 		right_leaf_rows->push_back(rows_->at(idx));
 		idx++;

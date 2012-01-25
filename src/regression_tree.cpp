@@ -8,7 +8,7 @@
 #include "regression_tree.h"
 #include <algorithm>
 #include <assert.h>
-#include <iostream>
+
 RegressionTree::RegressionTree(std::vector<std::vector<double>*> *rows) {
 	std::vector<std::vector<double>*> *learn_rows = new std::vector<std::vector<double>*>();
 	for (uint i = 0; i != rows->size(); i++) {
@@ -27,7 +27,7 @@ RegressionTree::RegressionTree(std::vector<std::vector<double>*> *rows) {
 		learn_rows->pop_back();
 	}
 	root_node_ = new TreeNode(learn_rows);
-	std::cout << tree_nodes_count << std::endl;
+
 }
 
 RegressionTree::~RegressionTree() {
