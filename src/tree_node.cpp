@@ -36,6 +36,7 @@ TreeNode::TreeNode(vector<vector<double>*> &rows) {
 		for (uint j = 0; j + 1 != rows.size(); j++) {
 			first_sum += rows[j]->at(0);
 			first_sqr_sum += rows[j]->at(0) * rows[j]->at(0);
+
 			if (rows[j]->at(i) != rows[j + 1]->at(i)) { //if can split at this point
 				double step_avg_value_first = first_sum / (j + 1);
 				double step_sum_sqr_difference_first = step_avg_value_first * step_avg_value_first

@@ -8,9 +8,10 @@
 #include "regression_tree.h"
 
 using namespace std;
-char line[5000];
+
 
 int main(int argc, char* argv[]) {
+	char line[5000];
 	ifstream f(argv[argc - 1]);
 	vector<vector<double>*> input_matrix;
 	while (f.getline(line, 5000)) {
