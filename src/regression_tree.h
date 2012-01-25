@@ -10,14 +10,14 @@
 #include <vector>
 #include "tree_node.h"
 
-using namespace std;
-
 class RegressionTree {
 public:
-	RegressionTree(vector<vector<double>* > &rows);
+	RegressionTree(std::vector<std::vector<double>*> *rows);
 	~RegressionTree();
+
 private:
-	TreeNode *root_node;
+	void init(std::vector<std::vector<double>*> *rows);
+	TreeNode *root_node_;
 };
 
 #endif /* REGRESSIONTREE_H_ */

@@ -1,31 +1,27 @@
 #include <fstream>
-#include <iostream>
-#include <cstring>
 #include <sstream>
 #include <assert.h>
 #include <stdlib.h>
 #include <vector>
 #include "regression_tree.h"
-
-using namespace std;
-
+#include "tree_node.h"
 
 int main(int argc, char* argv[]) {
 	char line[5000];
-	ifstream f(argv[argc - 1]);
-	vector<vector<double>*> input_matrix;
+	std::ifstream f(argv[argc - 1]);
+	std::vector<std::vector<double>*> *input_matrix = new std::vector<std::vector<double>*>();
 	while (f.getline(line, 5000)) {
-		stringstream sstr;
+		std::stringstream sstr;
 		sstr << line;
-		vector<double> *row = new vector<double>();
+		std::vector<double> *row = new std::vector<double>();
 		double tmp;
 		while (sstr >> tmp) {
 			row->push_back(tmp);
 		}
-		if (input_matrix.size()) {
-			assert(input_matrix[0]->size() == row->size());
+		if (input_matrix->size()) {
+			assert(input_matrix->at(0)->size() == row->size());
 		}
-		input_matrix.push_back(row);
+		input_matrix->push_back(row);
 	}
 	f.close();
 

@@ -11,12 +11,20 @@
 #include <vector>
 #include <functional>
 
+static int tree_nodes_count = 0;
+
 class TreeNode {
 public:
-	TreeNode(std::vector<std::vector<double>*> &rows);
+	TreeNode(std::vector<std::vector<double>*> *rows);
 	virtual ~TreeNode();
+	TreeNode* left_child();
+	TreeNode* right_child();
+	double sum_sqr_difference();
 
 private:
+	void init();
+	void split_node();
+
 	struct RowsCompare: public std::binary_function<std::vector<double>*, std::vector<double>*, bool> {
 		int idx;
 		RowsCompare(int idx) {
@@ -26,9 +34,16 @@ private:
 			return a->at(idx) < b->at(idx);
 		}
 	};
-	int best_index;
-	double greater_sqr_sum_difference;
-	double best_split_value;
+
+	std::vector<std::vector<double>*> *rows_;
+
+	TreeNode *left_child_;
+	TreeNode *right_child_;
+
+	double sum_sqr_difference_;
+
+	int split_index_;
+	double split_value_;
 };
 
 #endif /* TREENODE_H_ */
