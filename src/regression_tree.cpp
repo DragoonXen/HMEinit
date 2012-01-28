@@ -121,5 +121,4 @@ void RegressionTree::init(std::vector<std::vector<double>*> *rows) {
 	}
 
 	delete (test_rows);
-	delete (learn_rows);
 }

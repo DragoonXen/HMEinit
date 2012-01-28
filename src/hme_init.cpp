@@ -27,7 +27,7 @@ int main(int argc, char* argv[]) {
 	f.close();
 	srand(time(NULL));
 
-	RegressionTree tree(input_matrix, 750);
+	RegressionTree tree(input_matrix, 150);
 
 	return 0;
 }
