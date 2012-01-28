@@ -9,6 +9,7 @@
 #define TREENODE_H_
 
 #include <vector>
+#include <list>
 #include <functional>
 
 class TreeNode {
@@ -20,8 +21,16 @@ public:
 	TreeNode* right_child();
 	double sum_sqr_difference();
 	double sum_sqr_improvement();
+	double subtree_leafs_error();
+	int subtree_leafs();
+	void is_leaf(bool leaf);
 
 	void split_node();
+	std::vector<std::pair<double, TreeNode*> > evaluate_cut_tree();
+	std::vector<TreeNode* > get_leafs();
+	double evaluate_row(std::vector<double>* row);
+	void cut_subtrees();
+	void leafs_re_mark();
 
 private:
 	void init();
@@ -44,6 +53,9 @@ private:
 	double avg_value_;
 	double sum_sqr_difference_;
 	double sum_sqr_improvement_;
+	double subtree_leafs_error_;
+	int subtree_leafs_;
+	bool is_leaf_;
 
 	int split_index_;
 	double split_value_;

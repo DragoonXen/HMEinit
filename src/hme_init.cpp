@@ -2,6 +2,7 @@
 #include <sstream>
 #include <assert.h>
 #include <stdlib.h>
+#include <time.h>
 #include <vector>
 #include "regression_tree.h"
 #include "tree_node.h"
@@ -24,8 +25,9 @@ int main(int argc, char* argv[]) {
 		input_matrix->push_back(row);
 	}
 	f.close();
+	srand(time(NULL));
 
-	RegressionTree tree(input_matrix, 50);
+	RegressionTree tree(input_matrix, 750);
 
 	return 0;
 }

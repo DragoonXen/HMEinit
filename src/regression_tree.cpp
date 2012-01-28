@@ -30,11 +30,20 @@ RegressionTree::~RegressionTree() {
 	delete (root_node_);
 }
 
-void RegressionTree::init(std::vector<std::vector<double>*> *rows) {
-	std::vector<std::vector<double>*> *learn_rows = new std::vector<std::vector<double>*>();
+double RegressionTree::evaluate_mean_sqr_error(std::vector<std::vector<double>*> *rows) {
+	double sum_sqr_error = 0;
+
 	for (uint i = 0; i != rows->size(); i++) {
-		learn_rows->push_back(new std::vector<double>(*rows->at(i)));
+		double sqr_error = root_node_->evaluate_row(rows->at(i)) - rows->at(i)->at(0);
+		sqr_error *= sqr_error;
+		sum_sqr_error += sqr_error;
 	}
+	return sum_sqr_error / rows->size();
+}
+
+void RegressionTree::init(std::vector<std::vector<double>*> *rows) {
+	std::vector<std::vector<double>*> *learn_rows = new std::vector<std::vector<double>*>(
+			rows->begin(), rows->end());
 
 	std::random_shuffle(learn_rows->begin(), learn_rows->end());
 
@@ -69,12 +78,46 @@ void RegressionTree::init(std::vector<std::vector<double>*> *rows) {
 			queue.push(
 					std::make_pair(splitting_node->right_child()->sum_sqr_improvement(),
 							splitting_node->right_child()));
-		}
+		} else break;
 	}
-	// TODO: here must be implement best tree size choosing
+
+	std::vector<std::pair<double, TreeNode*> > tree_evaluation;
+
+	//find mean_sqr_error evaluation of the best tree && it's leafs
+	double best_subtree_test_mean_sqr_error = evaluate_mean_sqr_error(test_rows);
+	std::vector<TreeNode*> best_tree_leafs = root_node_->get_leafs();
+
+	std::cout<<"evaluate_trees"<<std::endl;
+	std::cout<<best_subtree_test_mean_sqr_error<<std::endl;
+	std::cout<<best_tree_leafs.size()<<std::endl;
+	std::cout<<"--------------"<<std::endl;
+	while ((tree_evaluation = root_node_->evaluate_cut_tree()).size() > 0) {
+		sort(tree_evaluation.begin(), tree_evaluation.end());
+		double cut_value = tree_evaluation.begin()->first;
+		uint i = 0;
+		std::cout<<cut_value<<std::endl;
+		while (i != tree_evaluation.size() && tree_evaluation[i].first == cut_value) {
+			tree_evaluation[i].second->is_leaf(true);
+			i++;
+		}
+
+		double subtree_mean_sqr_error = evaluate_mean_sqr_error(test_rows);
+		std::cout<<subtree_mean_sqr_error<<std::endl;
+		if (best_subtree_test_mean_sqr_error > subtree_mean_sqr_error) {
+			best_subtree_test_mean_sqr_error = subtree_mean_sqr_error;
+			best_tree_leafs = root_node_->get_leafs();
+			std::cout<<best_tree_leafs.size()<<std::endl;
+		}
+		std::cout<<"--------------"<<std::endl;
+	}
+
+	for (uint i = 0; i != best_tree_leafs.size(); i++) {
+		best_tree_leafs[i]->cut_subtrees();
+	}
+	root_node_->leafs_re_mark();
 
 	for (uint i = 0; i != test_rows->size(); i++) {
-		delete (test_rows->at(0));
+		delete (test_rows->at(i));
 	}
 
 	delete (test_rows);

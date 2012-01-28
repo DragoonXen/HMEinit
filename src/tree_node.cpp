@@ -11,16 +11,22 @@
 #include <iostream>
 
 TreeNode::TreeNode(std::vector<std::vector<double>*> *rows) {
-	std::cout<<"rows: "<<rows->size()<<std::endl;
+	std::cout << "rows: " << rows->size() << std::endl;
 	left_child_ = NULL;
 	right_child_ = NULL;
 	rows_ = rows;
+	subtree_leafs_error_ = 0;
+	subtree_leafs_ = 0;
+	split_value_ = 0;
+	split_index_ = -1;
+	is_leaf_ = true;
+	sum_sqr_improvement_ = 0;
 	init();
 }
 
 TreeNode::~TreeNode() {
-	delete(left_child_);
-	delete(right_child_);
+	if (left_child_ != NULL) delete (left_child_);
+	if (right_child_ != NULL) delete (right_child_);
 	if (rows_ != NULL) {
 		for (uint i = 0; i != rows_->size(); i++) {
 			delete (rows_->at(i));
@@ -44,12 +50,14 @@ double TreeNode::sum_sqr_difference() {
 double TreeNode::sum_sqr_improvement() {
 	return sum_sqr_improvement_;
 }
+double TreeNode::subtree_leafs_error() {
+	return subtree_leafs_error_;
+}
+void TreeNode::is_leaf(bool leaf) {
+	is_leaf_ = leaf;
+}
 
 void TreeNode::init() {
-	split_value_ = 0;
-	split_index_ = -1;
-	sum_sqr_improvement_ = 0;
-
 	double all_sum = 0;
 	double all_sum_sqrs = 0;
 	for (uint i = 0; i != rows_->size(); i++) {
@@ -61,7 +69,7 @@ void TreeNode::init() {
 	sum_sqr_difference_ = avg_value_ * avg_value_ * rows_->size() + all_sum_sqrs
 			- 2 * avg_value_ * all_sum;
 	// no reason to search slit node if all learn samples have same value
-	if (sum_sqr_difference_ == 0){
+	if (sum_sqr_difference_ == 0) {
 		return;
 	}
 
@@ -120,6 +128,80 @@ void TreeNode::split_node() {
 	delete (rows_);
 	rows_ = NULL;
 
+	is_leaf_ = false;
+
 	left_child_ = new TreeNode(left_leaf_rows);
 	right_child_ = new TreeNode(right_leaf_rows);
+}
+
+std::vector<std::pair<double, TreeNode*> > TreeNode::evaluate_cut_tree() {
+	std::vector<std::pair<double, TreeNode*> > nodes_vector;
+	if (is_leaf_) {
+		subtree_leafs_ = 1;
+		subtree_leafs_error_ = sum_sqr_difference_;
+		return nodes_vector;
+	}
+
+	nodes_vector = left_child_->evaluate_cut_tree();
+
+	std::vector<std::pair<double, TreeNode*> > right_child_vector;
+	right_child_vector = right_child_->evaluate_cut_tree();
+
+	nodes_vector.insert(nodes_vector.end(), right_child_vector.begin(), right_child_vector.end());
+
+	subtree_leafs_ = left_child_->subtree_leafs_ + right_child_->subtree_leafs_;
+	subtree_leafs_error_ = left_child_->subtree_leafs_error_ + right_child_->subtree_leafs_error_;
+
+	nodes_vector.push_back(
+			std::make_pair((sum_sqr_difference_ - subtree_leafs_error_) / (subtree_leafs_ - 1),
+					this));
+	return nodes_vector;
+}
+
+std::vector<TreeNode*> TreeNode::get_leafs() {
+	std::vector<TreeNode*> leafs_list;
+	if (is_leaf_) {
+		leafs_list.push_back(this);
+		return leafs_list;
+	}
+	leafs_list = left_child_->get_leafs();
+
+	std::vector<TreeNode*> right_child_leafs_list = right_child_->get_leafs();
+
+	leafs_list.insert(leafs_list.end(), right_child_leafs_list.begin(),
+			right_child_leafs_list.end());
+
+	return leafs_list;
+}
+double TreeNode::evaluate_row(std::vector<double>* row) {
+	if (is_leaf_) {
+		return avg_value_;
+	}
+	if (row->at(split_index_) <= split_value_) {
+		return left_child_->evaluate_row(row);
+	}
+	return right_child_->evaluate_row(row);
+}
+
+void TreeNode::cut_subtrees() {
+	if (left_child_ != NULL) {
+		delete (left_child_);
+		left_child_ = NULL;
+	}
+	if (right_child_ != NULL) {
+		delete (right_child_);
+		right_child_ = NULL;
+	}
+}
+
+void TreeNode::leafs_re_mark() {
+	if (left_child_ == NULL && right_child_ == NULL) {
+		is_leaf_ = true;
+	} else {
+		is_leaf_ = false;
+		if (left_child_ != NULL)
+			left_child_->leafs_re_mark();
+		if (right_child_ != NULL)
+			right_child_->leafs_re_mark();
+	}
 }
