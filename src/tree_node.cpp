@@ -25,8 +25,10 @@ TreeNode::TreeNode(std::vector<std::vector<double>*> *rows) {
 }
 
 TreeNode::~TreeNode() {
-	if (left_child_ != NULL) delete (left_child_);
-	if (right_child_ != NULL) delete (right_child_);
+	if (left_child_ != NULL)
+		delete (left_child_);
+	if (right_child_ != NULL)
+		delete (right_child_);
 	if (rows_ != NULL) {
 		for (uint i = 0; i != rows_->size(); i++) {
 			delete (rows_->at(i));
@@ -112,17 +114,12 @@ void TreeNode::split_node() {
 	std::vector<std::vector<double>*> *left_leaf_rows = new std::vector<std::vector<double>*>();
 	std::vector<std::vector<double>*> *right_leaf_rows = new std::vector<std::vector<double>*>();
 
-	sort(rows_->begin(), rows_->end(), RowsCompare(split_index_));
-
-	uint idx = 0;
-	while (rows_->at(idx)->at(split_index_) <= split_value_) {
-		left_leaf_rows->push_back(rows_->at(idx));
-		idx++;
-	}
-
-	while (idx != rows_->size()) {
-		right_leaf_rows->push_back(rows_->at(idx));
-		idx++;
+	for (uint i = 0; i != rows_->size(); i++) {
+		if (rows_->at(i)->at(split_index_) <= split_value_) {
+			left_leaf_rows->push_back(rows_->at(i));
+		} else {
+			right_leaf_rows->push_back(rows_->at(i));
+		}
 	}
 
 	delete (rows_);
