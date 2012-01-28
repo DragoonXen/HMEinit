@@ -8,6 +8,7 @@
 #ifndef REGRESSIONTREE_H_
 #define REGRESSIONTREE_H_
 #include <vector>
+#include <fstream>
 #include "tree_node.h"
 
 class RegressionTree {
@@ -16,6 +17,7 @@ public:
 	RegressionTree(std::vector<std::vector<double>*> *rows);
 	~RegressionTree();
 	double evaluate_mean_sqr_error(std::vector<std::vector<double>*> *rows);
+	void generate_hme_model(std::fstream* fmodel);
 
 private:
 	void init(std::vector<std::vector<double>*> *rows);

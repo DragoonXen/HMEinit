@@ -198,3 +198,42 @@ void TreeNode::leafs_re_mark() {
 			right_child_->leafs_re_mark();
 	}
 }
+
+void TreeNode::generate_hme_model(std::fstream* save_stream) {
+	save_stream->write((char *) &is_leaf_, sizeof(is_leaf_));
+	if (is_leaf_) {
+		std::vector<std::vector<double>*> *x_matrix = new std::vector<std::vector<double>*>();
+		 //skip y value (i.e. row(0))
+		for (uint i = 0; i != rows_->size(); i++) {
+			x_matrix->push_back(
+					new std::vector<double>(++rows_->at(i)->begin(), rows_->at(i)->end()));
+		}
+
+	} else {
+		//init gate with two oppositely directed vectors
+		double zero = 0;
+		double tmp = -1;
+		for (int i = 1; i != split_index_; i++) {
+			save_stream->write((char *) &zero, sizeof(zero));
+		}
+		save_stream->write((char *) &tmp, sizeof(tmp));
+		for (uint i = split_index_ + 1; i != rows_->at(0)->size(); i++) {
+			save_stream->write((char *) &zero, sizeof(zero));
+		}
+		save_stream->write((char *) &split_value_, sizeof(split_value_));
+
+		for (int i = 1; i != split_index_; i++) {
+			save_stream->write((char *) &zero, sizeof(zero));
+		}
+		tmp = 1;
+		save_stream->write((char *) &tmp, sizeof(tmp));
+		for (uint i = split_index_ + 1; i != rows_->at(0)->size(); i++) {
+			save_stream->write((char *) &zero, sizeof(zero));
+		}
+		tmp = -split_value_;
+		save_stream->write((char *) &tmp, sizeof(tmp));
+
+		left_child_->generate_hme_model(save_stream);
+		right_child_->generate_hme_model(save_stream);
+	}
+}

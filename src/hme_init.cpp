@@ -28,6 +28,8 @@ int main(int argc, char* argv[]) {
 	srand(time(NULL));
 
 	RegressionTree tree(input_matrix, 150);
-
+	std::fstream fmodel("base_model.bin", std::ios_base::binary | std::ios_base::out);
+	tree.generate_hme_model(&fmodel);
+	fmodel.close();
 	return 0;
 }

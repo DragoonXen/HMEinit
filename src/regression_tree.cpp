@@ -27,7 +27,7 @@ RegressionTree::RegressionTree(std::vector<std::vector<double>*> *rows) {
 }
 
 RegressionTree::~RegressionTree() {
-	for (int i = 0; i != rows_->size(); i++) {
+	for (uint i = 0; i != rows_->size(); i++) {
 		delete (rows_->at(i));
 	}
 	delete (rows_);
@@ -70,7 +70,7 @@ void RegressionTree::init(std::vector<std::vector<double>*> *rows) {
 	while (nodes_count < max_nodes_count_) {
 		std::pair<double, TreeNode*> best_node_to_split = queue.top();
 		queue.pop();
-		if (best_node_to_split.first > 1) {
+		if (best_node_to_split.first > 0) {
 			std::cout << best_node_to_split.first << std::endl;
 			nodes_count += 2;
 			TreeNode *splitting_node = best_node_to_split.second;
@@ -124,5 +124,10 @@ void RegressionTree::init(std::vector<std::vector<double>*> *rows) {
 	root_node_->leafs_re_mark();
 
 	delete (test_rows);
-	delete (learn_rows);
+}
+
+void RegressionTree::generate_hme_model(std::fstream *fmodel){
+	int x_count = rows_->at(0)->size()-1;
+	fmodel->write((char*) &x_count, sizeof(x_count));
+	root_node_->generate_hme_model(fmodel);
 }

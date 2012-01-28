@@ -9,7 +9,7 @@
 #define TREENODE_H_
 
 #include <vector>
-#include <list>
+#include <fstream>
 #include <functional>
 
 class TreeNode {
@@ -31,6 +31,7 @@ public:
 	double evaluate_row(std::vector<double>* row);
 	void cut_subtrees();
 	void leafs_re_mark();
+	void generate_hme_model(std::fstream* save_stream);
 
 private:
 	void init();
