@@ -10,8 +10,11 @@
 #include <algorithm>
 #include <iostream>
 
-TreeNode::TreeNode(std::vector<std::vector<double>*> *rows) {
-	std::cout << "rows: " << rows->size() << std::endl;
+using std::cout;
+using std::endl;
+
+TreeNode::TreeNode(vector<vector<double>*> *rows) {
+	cout << "rows: " << rows->size() << endl;
 	left_child_ = NULL;
 	right_child_ = NULL;
 	rows_ = rows;
@@ -110,8 +113,8 @@ void TreeNode::init() {
 }
 
 void TreeNode::split_node() {
-	std::vector<std::vector<double>*> *left_leaf_rows = new std::vector<std::vector<double>*>();
-	std::vector<std::vector<double>*> *right_leaf_rows = new std::vector<std::vector<double>*>();
+	vector<vector<double>*> *left_leaf_rows = new vector<vector<double>*>();
+	vector<vector<double>*> *right_leaf_rows = new vector<vector<double>*>();
 
 	for (uint i = 0; i != rows_->size(); i++) {
 		if (rows_->at(i)->at(split_index_) <= split_value_) {
@@ -127,9 +130,9 @@ void TreeNode::split_node() {
 	right_child_ = new TreeNode(right_leaf_rows);
 }
 
-std::vector<std::pair<double, TreeNode*> > TreeNode::evaluate_cut_tree() {
-	std::vector<std::pair<double, TreeNode*> > nodes_vector;
-	if (is_leaf_) {
+vector<pair<double, TreeNode*> > TreeNode::evaluate_cut_tree() {
+	vector<pair<double, TreeNode*> > nodes_vector;
+	if (is_leaf_) { //skip y value
 		subtree_leafs_ = 1;
 		subtree_leafs_error_ = sum_sqr_difference_;
 		return nodes_vector;
@@ -137,7 +140,7 @@ std::vector<std::pair<double, TreeNode*> > TreeNode::evaluate_cut_tree() {
 
 	nodes_vector = left_child_->evaluate_cut_tree();
 
-	std::vector<std::pair<double, TreeNode*> > right_child_vector;
+	vector<pair<double, TreeNode*> > right_child_vector;
 	right_child_vector = right_child_->evaluate_cut_tree();
 
 	nodes_vector.insert(nodes_vector.end(), right_child_vector.begin(), right_child_vector.end());
@@ -151,22 +154,22 @@ std::vector<std::pair<double, TreeNode*> > TreeNode::evaluate_cut_tree() {
 	return nodes_vector;
 }
 
-std::vector<TreeNode*> TreeNode::get_leafs() {
-	std::vector<TreeNode*> leafs_list;
+vector<TreeNode*> TreeNode::get_leafs() {
+	vector<TreeNode*> leafs_list;
 	if (is_leaf_) {
 		leafs_list.push_back(this);
 		return leafs_list;
 	}
 	leafs_list = left_child_->get_leafs();
 
-	std::vector<TreeNode*> right_child_leafs_list = right_child_->get_leafs();
+	vector<TreeNode*> right_child_leafs_list = right_child_->get_leafs();
 
 	leafs_list.insert(leafs_list.end(), right_child_leafs_list.begin(),
 			right_child_leafs_list.end());
 
 	return leafs_list;
 }
-double TreeNode::evaluate_row(std::vector<double>* row) {
+double TreeNode::evaluate_row(vector<double>* row) {
 	if (is_leaf_) {
 		return avg_value_;
 	}
@@ -199,15 +202,16 @@ void TreeNode::leafs_re_mark() {
 	}
 }
 
-void TreeNode::generate_hme_model(std::fstream* save_stream) {
+void TreeNode::generate_hme_model(fstream* save_stream) {
 	save_stream->write((char *) &is_leaf_, sizeof(is_leaf_));
 	if (is_leaf_) {
-		std::vector<std::vector<double>*> *x_matrix = new std::vector<std::vector<double>*>();
+		vector<vector<double>*> *x_matrix = new vector<vector<double>*>();
 		 //skip y value (i.e. row(0))
 		for (uint i = 0; i != rows_->size(); i++) {
 			x_matrix->push_back(
-					new std::vector<double>(++rows_->at(i)->begin(), rows_->at(i)->end()));
+					new vector<double>(++rows_->at(i)->begin(), rows_->at(i)->end()));
 		}
+
 
 	} else {
 		//init gate with two oppositely directed vectors

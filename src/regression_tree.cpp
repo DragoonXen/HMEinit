@@ -12,7 +12,12 @@
 #include <limits.h>
 #include <iostream>
 
-RegressionTree::RegressionTree(std::vector<std::vector<double>*> *rows, int max_nodes_count) {
+using std::cout;
+using std::endl;
+using std::pair;
+using std::make_pair;
+
+RegressionTree::RegressionTree(vector<vector<double>*> *rows, int max_nodes_count) {
 	assert(max_nodes_count > 0);
 	if ((max_nodes_count & 1) == 0) { //regression tree cann't have even number of nodes
 		--max_nodes_count;
@@ -21,7 +26,7 @@ RegressionTree::RegressionTree(std::vector<std::vector<double>*> *rows, int max_
 	init(rows);
 }
 
-RegressionTree::RegressionTree(std::vector<std::vector<double>*> *rows) {
+RegressionTree::RegressionTree(vector<vector<double>*> *rows) {
 	max_nodes_count_ = INT_MAX;
 	init(rows);
 }
@@ -34,7 +39,7 @@ RegressionTree::~RegressionTree() {
 	delete (root_node_);
 }
 
-double RegressionTree::evaluate_mean_sqr_error(std::vector<std::vector<double>*> *rows) {
+double RegressionTree::evaluate_mean_sqr_error(vector<vector<double>*> *rows) {
 	double sum_sqr_error = 0;
 
 	for (uint i = 0; i != rows->size(); i++) {
@@ -45,14 +50,13 @@ double RegressionTree::evaluate_mean_sqr_error(std::vector<std::vector<double>*>
 	return sum_sqr_error / rows->size();
 }
 
-void RegressionTree::init(std::vector<std::vector<double>*> *rows) {
-	rows_ = new std::vector<std::vector<double>*>(rows->begin(), rows->end());
-	std::vector<std::vector<double>*> *learn_rows = new std::vector<std::vector<double>*>(
-			rows_->begin(), rows_->end());
+void RegressionTree::init(vector<vector<double>*> *rows) {
+	rows_ = new vector<vector<double>*>(rows->begin(), rows->end());
+	vector<vector<double>*> *learn_rows = new vector<vector<double>*>(rows_->begin(), rows_->end());
 
 	std::random_shuffle(learn_rows->begin(), learn_rows->end());
 
-	std::vector<std::vector<double>*> *test_rows = new std::vector<std::vector<double>*>();
+	vector<vector<double>*> *test_rows = new vector<vector<double>*>();
 	int test_rows_count = learn_rows->size() / 10;
 	//must be at least 10 samples
 	assert(test_rows_count);
@@ -63,59 +67,59 @@ void RegressionTree::init(std::vector<std::vector<double>*> *rows) {
 	}
 	root_node_ = new TreeNode(learn_rows);
 
-	std::priority_queue<std::pair<double, TreeNode*> > queue;
-	queue.push(std::make_pair(root_node_->sum_sqr_improvement(), root_node_));
+	std::priority_queue<pair<double, TreeNode*> > queue;
+	queue.push(make_pair(root_node_->sum_sqr_improvement(), root_node_));
 
 	int nodes_count = 1;
 	while (nodes_count < max_nodes_count_) {
-		std::pair<double, TreeNode*> best_node_to_split = queue.top();
+		pair<double, TreeNode*> best_node_to_split = queue.top();
 		queue.pop();
 		if (best_node_to_split.first > 0) {
-			std::cout << best_node_to_split.first << std::endl;
+			cout << best_node_to_split.first << endl;
 			nodes_count += 2;
 			TreeNode *splitting_node = best_node_to_split.second;
 			splitting_node->split_node();
 
 			queue.push(
-					std::make_pair(splitting_node->left_child()->sum_sqr_improvement(),
+					make_pair(splitting_node->left_child()->sum_sqr_improvement(),
 							splitting_node->left_child()));
 
 			queue.push(
-					std::make_pair(splitting_node->right_child()->sum_sqr_improvement(),
+					make_pair(splitting_node->right_child()->sum_sqr_improvement(),
 							splitting_node->right_child()));
 		} else {
 			break;
 		}
 	}
 
-	std::vector<std::pair<double, TreeNode*> > tree_evaluation;
+	vector<pair<double, TreeNode*> > tree_evaluation;
 
 	//find mean_sqr_error evaluation of the best tree && it's leafs
 	double best_subtree_test_mean_sqr_error = evaluate_mean_sqr_error(test_rows);
-	std::vector<TreeNode*> best_tree_leafs = root_node_->get_leafs();
+	vector<TreeNode*> best_tree_leafs = root_node_->get_leafs();
 
-	std::cout << "evaluate_trees" << std::endl;
-	std::cout << best_subtree_test_mean_sqr_error << std::endl;
-	std::cout << best_tree_leafs.size() << std::endl;
-	std::cout << "--------------" << std::endl;
+	cout << "evaluate_trees" << endl;
+	cout << best_subtree_test_mean_sqr_error << endl;
+	cout << best_tree_leafs.size() << endl;
+	cout << "--------------" << endl;
 	while ((tree_evaluation = root_node_->evaluate_cut_tree()).size() > 0) {
 		sort(tree_evaluation.begin(), tree_evaluation.end());
 		double cut_value = tree_evaluation.begin()->first;
 		uint i = 0;
-		std::cout << cut_value << std::endl;
+		cout << cut_value << endl;
 		while (i != tree_evaluation.size() && tree_evaluation[i].first == cut_value) {
 			tree_evaluation[i].second->is_leaf(true);
 			i++;
 		}
 
 		double subtree_mean_sqr_error = evaluate_mean_sqr_error(test_rows);
-		std::cout << subtree_mean_sqr_error << std::endl;
+		cout << subtree_mean_sqr_error << endl;
 		if (best_subtree_test_mean_sqr_error > subtree_mean_sqr_error) {
 			best_subtree_test_mean_sqr_error = subtree_mean_sqr_error;
 			best_tree_leafs = root_node_->get_leafs();
-			std::cout << best_tree_leafs.size() << std::endl;
+			cout << best_tree_leafs.size() << endl;
 		}
-		std::cout << "--------------" << std::endl;
+		cout << "--------------" << endl;
 	}
 
 	for (uint i = 0; i != best_tree_leafs.size(); i++) {
@@ -126,8 +130,8 @@ void RegressionTree::init(std::vector<std::vector<double>*> *rows) {
 	delete (test_rows);
 }
 
-void RegressionTree::generate_hme_model(std::fstream *fmodel){
-	int x_count = rows_->at(0)->size()-1;
+void RegressionTree::generate_hme_model(fstream *fmodel) {
+	int x_count = rows_->at(0)->size() - 1;
 	fmodel->write((char*) &x_count, sizeof(x_count));
 	root_node_->generate_hme_model(fmodel);
 }

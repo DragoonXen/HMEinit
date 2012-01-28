@@ -7,14 +7,15 @@
 #include "regression_tree.h"
 #include "tree_node.h"
 
+using std::vector;
 int main(int argc, char* argv[]) {
 	char line[5000];
 	std::ifstream f(argv[argc - 1]);
-	std::vector<std::vector<double>*> *input_matrix = new std::vector<std::vector<double>*>();
+	vector<vector<double>*> *input_matrix = new vector<vector<double>*>();
 	while (f.getline(line, 5000)) {
 		std::stringstream sstr;
 		sstr << line;
-		std::vector<double> *row = new std::vector<double>();
+		vector<double> *row = new vector<double>();
 		double tmp;
 		while (sstr >> tmp) {
 			row->push_back(tmp);

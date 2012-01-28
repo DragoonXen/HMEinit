@@ -11,19 +11,24 @@
 #include <fstream>
 #include "tree_node.h"
 
+using std::vector;
+using std::fstream;
+
 class RegressionTree {
+
 public:
-	RegressionTree(std::vector<std::vector<double>*> *rows, int max_nodes_count);
-	RegressionTree(std::vector<std::vector<double>*> *rows);
+
+	RegressionTree(vector<vector<double>*> *rows, int max_nodes_count);
+	RegressionTree(vector<vector<double>*> *rows);
 	~RegressionTree();
-	double evaluate_mean_sqr_error(std::vector<std::vector<double>*> *rows);
-	void generate_hme_model(std::fstream* fmodel);
+	double evaluate_mean_sqr_error(vector<vector<double>*> *rows);
+	void generate_hme_model(fstream* fmodel);
 
 private:
-	void init(std::vector<std::vector<double>*> *rows);
+	void init(vector<vector<double>*> *rows);
 	TreeNode *root_node_;
 	int max_nodes_count_;
-	std::vector<std::vector<double>*> *rows_;
+	vector<vector<double>*> *rows_;
 };
 
 #endif /* REGRESSIONTREE_H_ */

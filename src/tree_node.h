@@ -12,9 +12,13 @@
 #include <fstream>
 #include <functional>
 
+using std::vector;
+using std::pair;
+using std::fstream;
+
 class TreeNode {
 public:
-	TreeNode(std::vector<std::vector<double>*> *rows);
+	TreeNode(vector<vector<double>*> *rows);
 	virtual ~TreeNode();
 
 	TreeNode* left_child();
@@ -26,27 +30,27 @@ public:
 	void is_leaf(bool leaf);
 
 	void split_node();
-	std::vector<std::pair<double, TreeNode*> > evaluate_cut_tree();
-	std::vector<TreeNode* > get_leafs();
-	double evaluate_row(std::vector<double>* row);
+	vector<pair<double, TreeNode*> > evaluate_cut_tree();
+	vector<TreeNode* > get_leafs();
+	double evaluate_row(vector<double>* row);
 	void cut_subtrees();
 	void leafs_re_mark();
-	void generate_hme_model(std::fstream* save_stream);
+	void generate_hme_model(fstream* save_stream);
 
 private:
 	void init();
 
-	struct RowsCompare: public std::binary_function<std::vector<double>*, std::vector<double>*, bool> {
+	struct RowsCompare: public std::binary_function<vector<double>*, vector<double>*, bool> {
 		int idx;
 		RowsCompare(int idx) {
 			this->idx = idx;
 		}
-		inline bool operator()(const std::vector<double>* a, const std::vector<double>* b) {
+		inline bool operator()(const vector<double>* a, const vector<double>* b) {
 			return a->at(idx) < b->at(idx);
 		}
 	};
 
-	std::vector<std::vector<double>*> *rows_;
+	vector<vector<double>*> *rows_;
 
 	TreeNode *left_child_;
 	TreeNode *right_child_;
