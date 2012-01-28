@@ -7,11 +7,15 @@
 
 #include "tree_node.h"
 
+#include "matrix_utils.h"
+
 #include <algorithm>
 #include <iostream>
 
 using std::cout;
 using std::endl;
+using matrix_utils::pseudo_inversion;
+using matrix_utils::operator *;
 
 TreeNode::TreeNode(vector<vector<double>*> *rows) {
 	cout << "rows: " << rows->size() << endl;
@@ -205,13 +209,21 @@ void TreeNode::leafs_re_mark() {
 void TreeNode::generate_hme_model(fstream* save_stream) {
 	save_stream->write((char *) &is_leaf_, sizeof(is_leaf_));
 	if (is_leaf_) {
-		vector<vector<double>*> *x_matrix = new vector<vector<double>*>();
-		 //skip y value (i.e. row(0))
+		vector<vector<double>*> x_matrix;
+		vector<vector<double>*> d_vector;
+		//divide onto y and x values
 		for (uint i = 0; i != rows_->size(); i++) {
-			x_matrix->push_back(
-					new vector<double>(++rows_->at(i)->begin(), rows_->at(i)->end()));
-		}
+			vector<double>::iterator it = ++rows_->at(i)->begin();
+			x_matrix.push_back(new vector<double>(it, rows_->at(i)->end()));
+			d_vector.push_back(new vector<double>(rows_->at(i)->begin(), it));
 
+		}
+		vector<vector<double>*> inversed_x_matrix = pseudo_inversion(x_matrix);
+
+		vector<vector<double>*> weight_matrix = inversed_x_matrix * d_vector;
+		for (uint i = 0; i != weight_matrix.size(); i++) {
+			save_stream->write((char *) &weight_matrix[i]->at(0), sizeof(double));
+		}
 
 	} else {
 		//init gate with two oppositely directed vectors

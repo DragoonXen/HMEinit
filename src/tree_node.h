@@ -31,7 +31,7 @@ public:
 
 	void split_node();
 	vector<pair<double, TreeNode*> > evaluate_cut_tree();
-	vector<TreeNode* > get_leafs();
+	vector<TreeNode*> get_leafs();
 	double evaluate_row(vector<double>* row);
 	void cut_subtrees();
 	void leafs_re_mark();

@@ -9,6 +9,7 @@
 
 using std::vector;
 int main(int argc, char* argv[]) {
+	srand(time(NULL));
 	char line[5000];
 	std::ifstream f(argv[argc - 1]);
 	vector<vector<double>*> *input_matrix = new vector<vector<double>*>();
@@ -26,7 +27,6 @@ int main(int argc, char* argv[]) {
 		input_matrix->push_back(row);
 	}
 	f.close();
-	srand(time(NULL));
 
 	RegressionTree tree(input_matrix, 150);
 	std::fstream fmodel("base_model.bin", std::ios_base::binary | std::ios_base::out);
