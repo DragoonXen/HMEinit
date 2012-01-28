@@ -21,6 +21,7 @@ private:
 	void init(std::vector<std::vector<double>*> *rows);
 	TreeNode *root_node_;
 	int max_nodes_count_;
+	std::vector<std::vector<double>*> *rows_;
 };
 
 #endif /* REGRESSIONTREE_H_ */

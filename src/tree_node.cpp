@@ -25,14 +25,13 @@ TreeNode::TreeNode(std::vector<std::vector<double>*> *rows) {
 }
 
 TreeNode::~TreeNode() {
-	if (left_child_ != NULL)
+	if (left_child_ != NULL) {
 		delete (left_child_);
-	if (right_child_ != NULL)
+	}
+	if (right_child_ != NULL) {
 		delete (right_child_);
+	}
 	if (rows_ != NULL) {
-		for (uint i = 0; i != rows_->size(); i++) {
-			delete (rows_->at(i));
-		}
 		delete (rows_);
 	}
 }
@@ -121,9 +120,6 @@ void TreeNode::split_node() {
 			right_leaf_rows->push_back(rows_->at(i));
 		}
 	}
-
-	delete (rows_);
-	rows_ = NULL;
 
 	is_leaf_ = false;
 
