@@ -80,8 +80,8 @@ vector<vector<double>*> matrix_utils::inversion(const vector<vector<double>*> &m
 	}
 
 	for (uint i = 0; i != n; i++) {
-		uint index_max = 0;
-		for (uint j = 1; j != n; j++) {
+		uint index_max = i;
+		for (uint j = i + 1; j != n; j++) {
 			if (abs(temp_matrix[j]->at(i)) > abs(temp_matrix[index_max]->at(i))) {
 				index_max = j;
 			}
@@ -95,7 +95,7 @@ vector<vector<double>*> matrix_utils::inversion(const vector<vector<double>*> &m
 			result_matrix[index_max] = result_matrix[i];
 			result_matrix[i] = temp;
 		}
-		if (abs(temp_matrix[index_max]->at(i)) < 1e-7) {
+		if (abs(temp_matrix[index_max]->at(i)) < 1e-13) {
 			cout << "det(A) == 0" << endl;
 			assert(false);
 		}
