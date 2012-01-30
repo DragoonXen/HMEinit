@@ -66,13 +66,17 @@ vector<vector<double>*> matrix_utils::operator *(const vector<vector<double>*> &
 	return result_matrix;
 }
 
-vector<vector<double>*> matrix_utils::inversion(const vector<vector<double>*> &matrix) {
+vector<vector<double>*> matrix_utils::inversion(const vector<vector<double>*> &matrix,
+		vector<uint> &removed) {
 	assert(is_matrix(matrix));
 	uint n(matrix.size());
 	assert(n == matrix[0]->size());
 	vector<vector<double>*> temp_matrix = create_matrix(n, n);
 	vector<vector<double>*> result_matrix = create_matrix(n, n);
+	vector<uint> row_indexes;
+	row_indexes.resize(n);
 	for (uint i = 0; i != n; i++) {
+		row_indexes[i] = i;
 		result_matrix[i]->at(i) = 1;
 		for (uint j = 0; j != n; j++) {
 			temp_matrix[i]->at(j) = matrix[i]->at(j);
@@ -87,17 +91,33 @@ vector<vector<double>*> matrix_utils::inversion(const vector<vector<double>*> &m
 			}
 		}
 		if (index_max != i) {
-			vector<double> *temp = temp_matrix[index_max];
-			temp_matrix[index_max] = temp_matrix[i];
-			temp_matrix[i] = temp;
+			swap(temp_matrix[index_max], temp_matrix[i]);
+			swap(result_matrix[index_max], result_matrix[i]);
 
-			temp = result_matrix[index_max];
-			result_matrix[index_max] = result_matrix[i];
-			result_matrix[i] = temp;
+			int tmp = row_indexes[index_max];
+			row_indexes[index_max] = row_indexes[i];
+			row_indexes[i] = tmp;
 		}
-		if (abs(temp_matrix[index_max]->at(i)) < 1e-13) {
-			cout << "det(A) == 0" << endl;
-			assert(false);
+		if (abs(temp_matrix[index_max]->at(i)) < 1e-9) {
+			removed.push_back(i);
+			for (uint j = 0; j != row_indexes.size(); j++) {
+				if (row_indexes[j] == i) {
+					assert(j >= i);
+					row_indexes.erase(row_indexes.begin() + j);
+					temp_matrix.erase(temp_matrix.begin() + j);
+					result_matrix.erase(result_matrix.begin() + j);
+					--j;
+				} else {
+					temp_matrix[j]->erase(temp_matrix[j]->begin() + i);
+					result_matrix[j]->erase(result_matrix[j]->begin() + i);
+					if (row_indexes[j] > i) {
+						--row_indexes[j];
+					}
+				}
+			}
+			--n;
+			--i;
+			continue;
 		}
 		double divizor = temp_matrix[i]->at(i);
 		for (uint k = 0; k != n; k++) {
@@ -116,13 +136,3 @@ vector<vector<double>*> matrix_utils::inversion(const vector<vector<double>*> &m
 	}
 	return result_matrix;
 }
-
-vector<vector<double>*> matrix_utils::pseudo_inversion(const vector<vector<double>*> &matrix) {
-	vector<vector<double>*> transposed_matrix = transpose(matrix);
-	if (matrix.size() > transposed_matrix.size()) {
-		return inversion(transposed_matrix * matrix) * transposed_matrix;
-	} else {
-		return transposed_matrix * inversion(matrix * transposed_matrix);
-	}
-}
-

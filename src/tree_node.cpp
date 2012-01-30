@@ -14,8 +14,10 @@
 
 using std::cout;
 using std::endl;
-using matrix_utils::pseudo_inversion;
 using matrix_utils::operator *;
+using matrix_utils::inversion;
+using matrix_utils::transpose;
+using std::reverse;
 
 TreeNode::TreeNode(vector<vector<double>*> *rows) {
 	cout << "rows: " << rows->size() << endl;
@@ -205,7 +207,7 @@ void TreeNode::leafs_re_mark() {
 			right_child_->leafs_re_mark();
 	}
 }
-#define matrix_out
+
 void TreeNode::generate_hme_model(fstream* save_stream) {
 	save_stream->write((char *) &is_leaf_, sizeof(is_leaf_));
 	if (is_leaf_) {
@@ -215,16 +217,14 @@ void TreeNode::generate_hme_model(fstream* save_stream) {
 		for (uint i = 0; i != rows_->size(); i++) {
 			vector<double>::iterator it = ++rows_->at(i)->begin();
 			x_matrix.push_back(new vector<double>(it, rows_->at(i)->end()));
-			x_matrix[i]->push_back(1);
 			d_vector.push_back(new vector<double>(rows_->at(i)->begin(), it));
-
 		}
 
 		//remove const columns
 		vector<int> removed_parameters;
-		for (uint i = 0; i != rows_->at(0)->size(); i++) {
+		for (uint i = 0; i != x_matrix[0]->size(); i++) {
 			bool ok = false;
-			for (uint j = 1; j != rows_->size(); j++) {
+			for (uint j = 1; j != x_matrix.size(); j++) {
 				if (x_matrix[j]->at(i) != x_matrix[0]->at(i)) {
 					ok = true;
 					break;
@@ -234,37 +234,65 @@ void TreeNode::generate_hme_model(fstream* save_stream) {
 				removed_parameters.push_back(i);
 			}
 		}
-		std::reverse(removed_parameters.begin(), removed_parameters.end());
+		for (uint i = 0; i != x_matrix.size(); i++) {
+			x_matrix[i]->push_back(1);
+		}
+		//need to recover parameters from behind, else fail
+		reverse(removed_parameters.begin(), removed_parameters.end());
 		for (uint i = 0; i != removed_parameters.size(); i++) {
-			for (uint j = 0; j != rows_->size(); j++) {
+			for (uint j = 0; j != x_matrix.size(); j++) {
 				x_matrix[j]->erase(x_matrix[j]->begin() + removed_parameters[i]);
 			}
 		}
 
-		vector<vector<double>*> inversed_x_matrix = pseudo_inversion(x_matrix);
-
-		vector<vector<double>*> weight_matrix = matrix_utils::transpose(
-				inversed_x_matrix * d_vector);
-		for (uint i = 0; i != weight_matrix[0]->size(); i++) {
-			save_stream->write((char *) &weight_matrix[0]->at(i), sizeof(double));
+		vector<vector<double>*> transposed_x_matrix = transpose(x_matrix);
+		vector<uint> inversion_removed_parameters;
+		vector<vector<double>*> inversed_mulx_matrix = inversion(transposed_x_matrix * x_matrix,
+				inversion_removed_parameters);
+		for (uint i = 0; i != inversion_removed_parameters.size(); i++) {
+			transposed_x_matrix.erase(
+					transposed_x_matrix.begin() + inversion_removed_parameters[i]);
 		}
+		vector<double> *weight_vector = transpose(
+				inversed_mulx_matrix * (transposed_x_matrix * d_vector))[0];
+#define matrix_out
 #ifdef matrix_out
 		freopen("addit.txt", "a", stdout);
 		cout.setf(std::ios_base::fixed);
 		cout.precision(6);
-		for (uint i = 0; i != rows_->size(); i++) {
-			for (uint j = 0; j != rows_->at(i)->size(); j++) {
-				cout << rows_->at(i)->at(j) << ' ';
+		cout << transposed_x_matrix[0]->size() << endl;
+		for (uint i = 0; i != transposed_x_matrix.size(); i++) {
+			for (uint j = 0; j != transposed_x_matrix[i]->size(); j++) {
+				cout << transposed_x_matrix[i]->at(j) << ' ';
 			}
 			cout << endl;
 		}
 		cout << endl;
-		for (uint i = 0; i != weight_matrix[0]->size(); i++) {
-			cout<<weight_matrix[0]->at(i)<<' ';
+
+		vector<vector<double>*> mul_x_matrix = transposed_x_matrix * transpose(transposed_x_matrix);
+		for (uint i = 0; i != mul_x_matrix.size(); i++) {
+			for (uint j = 0; j != mul_x_matrix[i]->size(); j++) {
+				cout << mul_x_matrix[i]->at(j) << ' ';
+			}
+			cout << endl;
 		}
-		cout<<endl<<endl;
+		cout << endl;
+		for (uint i = 0; i != weight_vector->size(); i++) {
+			cout << weight_vector->at(i) << ' ';
+		}
+		cout << endl << endl;
 		fclose(stdout);
 #endif
+		for (uint i = 0; i != inversion_removed_parameters.size(); i++) {
+			weight_vector->insert(weight_vector->begin() + inversion_removed_parameters[i], 0);
+		}
+		for (uint i = 0; i != removed_parameters.size(); i++) {
+			weight_vector->insert(weight_vector->begin() + removed_parameters[i], 0);
+		}
+
+		for (uint i = 0; i != weight_vector->size(); i++) {
+			save_stream->write((char *) &weight_vector->at(i), sizeof(double));
+		}
 
 	} else {
 		//init gate with two oppositely directed vectors

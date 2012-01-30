@@ -21,7 +21,7 @@ vector<vector<double>*> create_matrix(uint n, uint m);
 vector<vector<double>*> transpose(const vector<vector<double>*> &matrix);
 vector<vector<double>*> operator *(const vector<vector<double>*> &first,
 		const vector<vector<double>*> &second);
-vector<vector<double>*> inversion(const vector<vector<double>*> &matrix);
+vector<vector<double>*> inversion(const vector<vector<double>*> &matrix, vector<uint> &removed);
 vector<vector<double>*> pseudo_inversion(const vector<vector<double>*> &matrix);
 
 } //namespace matrix_utils
