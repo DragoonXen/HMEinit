@@ -11,13 +11,17 @@
 
 #include <algorithm>
 #include <iostream>
+#include <math.h>
 
 using std::cout;
 using std::endl;
+using std::min;
+using std::reverse;
+
 using matrix_utils::operator *;
 using matrix_utils::inversion;
 using matrix_utils::transpose;
-using std::reverse;
+using matrix_utils::remove_linear_dependence_rows;
 
 TreeNode::TreeNode(vector<vector<double>*> *rows) {
 	cout << "rows: " << rows->size() << endl;
@@ -30,6 +34,7 @@ TreeNode::TreeNode(vector<vector<double>*> *rows) {
 	split_index_ = -1;
 	is_leaf_ = true;
 	sum_sqr_improvement_ = 0;
+	min_split_count_ = 0;
 	init();
 }
 
@@ -63,6 +68,9 @@ double TreeNode::sum_sqr_improvement() {
 double TreeNode::subtree_leafs_error() {
 	return subtree_leafs_error_;
 }
+uint TreeNode::min_split_count() {
+	return min_split_count_;
+}
 void TreeNode::is_leaf(bool leaf) {
 	is_leaf_ = leaf;
 }
@@ -83,11 +91,11 @@ void TreeNode::init() {
 		return;
 	}
 
-	int columns_count = rows_->at(0)->size();
+	uint columns_count = rows_->at(0)->size();
 	double min_leafes_sum_sqr_difference = sum_sqr_difference_;
 
 	//find best dividing onto two parts
-	for (int i = 1; i != columns_count; i++) {
+	for (uint i = 1; i != columns_count; i++) {
 		sort(rows_->begin(), rows_->end(), RowsCompare(i));
 
 		double first_sum = 0;
@@ -111,6 +119,7 @@ void TreeNode::init() {
 					min_leafes_sum_sqr_difference = diff;
 					split_value_ = (rows_->at(j)->at(i) + rows_->at(j + 1)->at(i)) / 2;
 					split_index_ = i;
+					min_split_count_ = min((uint) (j + 1), (uint) (rows_->size() - j - 1));
 				}
 			}
 		}
@@ -211,89 +220,85 @@ void TreeNode::leafs_re_mark() {
 void TreeNode::generate_hme_model(fstream* save_stream) {
 	save_stream->write((char *) &is_leaf_, sizeof(is_leaf_));
 	if (is_leaf_) {
-		vector<vector<double>*> x_matrix;
-		vector<vector<double>*> d_vector;
+		Matrix x_matrix;
+		Matrix d_vector;
+		x_matrix.reserve(rows_->size());
+		d_vector.reserve(rows_->size());
 		//divide onto y and x values
 		for (uint i = 0; i != rows_->size(); i++) {
 			vector<double>::iterator it = ++rows_->at(i)->begin();
-			x_matrix.push_back(new vector<double>(it, rows_->at(i)->end()));
-			d_vector.push_back(new vector<double>(rows_->at(i)->begin(), it));
+			x_matrix.push_back(vector<double>(it, rows_->at(i)->end()));
+			d_vector.push_back(vector<double>(rows_->at(i)->begin(), it));
 		}
 
-		//remove const columns
-		vector<int> removed_parameters;
-		for (uint i = 0; i != x_matrix[0]->size(); i++) {
+		Matrix transposed_x_matrix = transpose(x_matrix);
+		//remove const parameters
+		vector<uint> removed_parameters;
+		for (uint i = 0; i != transposed_x_matrix.size(); i++) {
 			bool ok = false;
-			for (uint j = 1; j != x_matrix.size(); j++) {
-				if (x_matrix[j]->at(i) != x_matrix[0]->at(i)) {
+			for (uint j = 1; j != transposed_x_matrix[0].size(); j++) {
+				if (transposed_x_matrix[i][j] != transposed_x_matrix[i][0]) {
 					ok = true;
 					break;
 				}
 			}
 			if (!ok) {
+				transposed_x_matrix.erase(transposed_x_matrix.begin() + i);
 				removed_parameters.push_back(i);
+				--i;
 			}
 		}
-		for (uint i = 0; i != x_matrix.size(); i++) {
-			x_matrix[i]->push_back(1);
+		vector<uint> removed_linear_dependenced_parameters = remove_linear_dependence_rows(
+				transposed_x_matrix);
+
+		transposed_x_matrix.push_back(vector<double>(transposed_x_matrix[0].size(), 1.0));
+		x_matrix = transpose(transposed_x_matrix);
+
+		vector<double> weight_vector = transpose(
+				inversion(transposed_x_matrix * x_matrix) * (transposed_x_matrix * d_vector))[0];
+
+		//place zeroes to removed parameters
+		for (uint i = 0; i != removed_linear_dependenced_parameters.size(); i++) {
+			weight_vector.insert(weight_vector.begin() + removed_linear_dependenced_parameters[i],
+					0);
 		}
-		//need to recover parameters from behind, else fail
-		reverse(removed_parameters.begin(), removed_parameters.end());
 		for (uint i = 0; i != removed_parameters.size(); i++) {
-			for (uint j = 0; j != x_matrix.size(); j++) {
-				x_matrix[j]->erase(x_matrix[j]->begin() + removed_parameters[i]);
-			}
+			weight_vector.insert(weight_vector.begin() + removed_parameters[i], 0);
 		}
 
-		vector<vector<double>*> transposed_x_matrix = transpose(x_matrix);
-		vector<uint> inversion_removed_parameters;
-		vector<vector<double>*> inversed_mulx_matrix = inversion(transposed_x_matrix * x_matrix,
-				inversion_removed_parameters);
-		for (uint i = 0; i != inversion_removed_parameters.size(); i++) {
-			transposed_x_matrix.erase(
-					transposed_x_matrix.begin() + inversion_removed_parameters[i]);
+		for (uint i = 0; i != weight_vector.size(); i++) {
+			save_stream->write((char *) &weight_vector[i], sizeof(weight_vector[i]));
 		}
-		vector<double> *weight_vector = transpose(
-				inversed_mulx_matrix * (transposed_x_matrix * d_vector))[0];
-#define matrix_out
+
+//#define matrix_out
 #ifdef matrix_out
 		freopen("addit.txt", "a", stdout);
 		cout.setf(std::ios_base::fixed);
 		cout.precision(6);
-		cout << transposed_x_matrix[0]->size() << endl;
+		cout << transposed_x_matrix[0].size() << endl;
 		for (uint i = 0; i != transposed_x_matrix.size(); i++) {
-			for (uint j = 0; j != transposed_x_matrix[i]->size(); j++) {
-				cout << transposed_x_matrix[i]->at(j) << ' ';
+			for (uint j = 0; j != transposed_x_matrix[i].size(); j++) {
+				cout << transposed_x_matrix[i][j] << ' ';
 			}
 			cout << endl;
 		}
 		cout << endl;
 
-		vector<vector<double>*> mul_x_matrix = transposed_x_matrix * transpose(transposed_x_matrix);
+		Matrix mul_x_matrix = transposed_x_matrix * x_matrix;
 		for (uint i = 0; i != mul_x_matrix.size(); i++) {
-			for (uint j = 0; j != mul_x_matrix[i]->size(); j++) {
-				cout << mul_x_matrix[i]->at(j) << ' ';
+			for (uint j = 0; j != mul_x_matrix[i].size(); j++) {
+				cout << mul_x_matrix[i][j] << ' ';
 			}
 			cout << endl;
 		}
 		cout << endl;
-		for (uint i = 0; i != weight_vector->size(); i++) {
-			cout << weight_vector->at(i) << ' ';
+		for (uint i = 0; i != weight_vector.size(); i++) {
+			cout << weight_vector[i] << ' ';
 		}
 		cout << endl << endl;
 		fclose(stdout);
-#endif
-		for (uint i = 0; i != inversion_removed_parameters.size(); i++) {
-			weight_vector->insert(weight_vector->begin() + inversion_removed_parameters[i], 0);
-		}
-		for (uint i = 0; i != removed_parameters.size(); i++) {
-			weight_vector->insert(weight_vector->begin() + removed_parameters[i], 0);
-		}
-
-		for (uint i = 0; i != weight_vector->size(); i++) {
-			save_stream->write((char *) &weight_vector->at(i), sizeof(double));
-		}
-
+		free_memory(mul_x_matrix);
+#endif //#ifdef matrix_out
 	} else {
 		//init gate with two oppositely directed vectors
 		double zero = 0;

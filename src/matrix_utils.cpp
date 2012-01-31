@@ -15,124 +15,149 @@ using std::abs;
 using std::cout;
 using std::endl;
 
-inline bool matrix_utils::is_matrix(const vector<vector<double>*> &matrix) {
+inline bool matrix_utils::is_matrix(const Matrix &matrix) {
 	if (matrix.size() == 0) {
 		return false;
-
 	}
 	for (uint i = 1; i != matrix.size(); i++) {
-		if (matrix[i]->size() != matrix[0]->size()) {
+		if (matrix[i].size() != matrix[0].size()) {
 			return false;
 		}
 	}
 	return true;
 }
 
-vector<vector<double>*> matrix_utils::create_matrix(uint rows, uint columns) {
-	vector<vector<double>*> result_matrix(rows);
+Matrix matrix_utils::create_matrix(uint rows, uint columns) {
+	Matrix result_matrix;
+	result_matrix.reserve(rows);
 	for (uint i = 0; i != rows; i++) {
-		result_matrix[i] = new vector<double>(columns);
+		vector<double> tmp(columns);
+		result_matrix.push_back(tmp);
 	}
 	return result_matrix;
 }
 
-vector<vector<double>*> matrix_utils::transpose(const vector<vector<double>*> &matrix) {
+Matrix matrix_utils::transpose(const Matrix &matrix) {
 	assert(is_matrix(matrix));
-	vector<vector<double>*> result_matrix = create_matrix(matrix[0]->size(), matrix.size());
-	for (uint i = 0; i != matrix[0]->size(); i++) {
+	Matrix result_matrix = create_matrix(matrix[0].size(), matrix.size());
+	for (uint i = 0; i != matrix[0].size(); i++) {
 		for (uint j = 0; j != matrix.size(); j++) {
-			result_matrix[i]->at(j) = matrix[j]->at(i);
+			result_matrix[i].at(j) = matrix[j].at(i);
 		}
 	}
 	return result_matrix;
 }
 
-vector<vector<double>*> matrix_utils::operator *(const vector<vector<double>*> &first,
-		const vector<vector<double>*> &second) {
+Matrix matrix_utils::operator *(const Matrix &first, const Matrix &second) {
 	assert(is_matrix(first));
 	assert(is_matrix(second));
-	assert(first[0]->size() == second.size());
-	uint n(first.size()), m(second[0]->size()), l(second.size());
-	vector<vector<double>*> result_matrix = create_matrix(n, m);
+	assert(first[0].size() == second.size());
+	uint n(first.size()), m(second[0].size()), l(second.size());
+	Matrix result_matrix = create_matrix(n, m);
 	for (uint i = 0; i != n; i++) {
 		for (uint j = 0; j != m; j++) {
 			double result = 0;
 			for (uint k = 0; k != l; k++) {
-				result += first[i]->at(k) * second[k]->at(j);
+				result += first[i][k] * second[k][j];
 			}
-			result_matrix[i]->at(j) = result;
+			result_matrix[i][j] = result;
 		}
 	}
 	return result_matrix;
 }
 
-vector<vector<double>*> matrix_utils::inversion(const vector<vector<double>*> &matrix,
-		vector<uint> &removed) {
+Matrix matrix_utils::inversion(const Matrix &matrix) {
 	assert(is_matrix(matrix));
 	uint n(matrix.size());
-	assert(n == matrix[0]->size());
-	vector<vector<double>*> temp_matrix = create_matrix(n, n);
-	vector<vector<double>*> result_matrix = create_matrix(n, n);
-	vector<uint> row_indexes;
-	row_indexes.resize(n);
+	assert(n == matrix[0].size());
+	Matrix temp_matrix = create_matrix(n, n);
+	Matrix result_matrix = create_matrix(n, n);
 	for (uint i = 0; i != n; i++) {
-		row_indexes[i] = i;
-		result_matrix[i]->at(i) = 1;
+		result_matrix[i][i] = 1;
 		for (uint j = 0; j != n; j++) {
-			temp_matrix[i]->at(j) = matrix[i]->at(j);
+			temp_matrix[i][j] = matrix[i][j];
 		}
 	}
-
 	for (uint i = 0; i != n; i++) {
 		uint index_max = i;
 		for (uint j = i + 1; j != n; j++) {
-			if (abs(temp_matrix[j]->at(i)) > abs(temp_matrix[index_max]->at(i))) {
+			if (abs(temp_matrix[j][i]) > abs(temp_matrix[index_max][i])) {
 				index_max = j;
 			}
 		}
 		if (index_max != i) {
 			swap(temp_matrix[index_max], temp_matrix[i]);
 			swap(result_matrix[index_max], result_matrix[i]);
-
-			int tmp = row_indexes[index_max];
-			row_indexes[index_max] = row_indexes[i];
-			row_indexes[i] = tmp;
 		}
-		if (abs(temp_matrix[index_max]->at(i)) < 1e-9) {
-			removed.push_back(i);
-			for (uint j = 0; j != row_indexes.size(); j++) {
-				if (row_indexes[j] == i) {
-					assert(j >= i);
-					row_indexes.erase(row_indexes.begin() + j);
-					temp_matrix.erase(temp_matrix.begin() + j);
-					result_matrix.erase(result_matrix.begin() + j);
-					--j;
-				} else {
-					temp_matrix[j]->erase(temp_matrix[j]->begin() + i);
-					result_matrix[j]->erase(result_matrix[j]->begin() + i);
-					if (row_indexes[j] > i) {
-						--row_indexes[j];
-					}
-				}
-			}
-			--n;
-			--i;
-			continue;
-		}
-		double divizor = temp_matrix[i]->at(i);
+		/*if (abs(temp_matrix[index_max][i]) < 1e-9) {
+			cout << "det (matrix) == 0" << endl;
+			assert(false);
+		}*/
+		double divizor = temp_matrix[i][i];
 		for (uint k = 0; k != n; k++) {
-			temp_matrix[i]->at(k) /= divizor;
-			result_matrix[i]->at(k) /= divizor;
+			temp_matrix[i][k] /= divizor;
+			result_matrix[i][k] /= divizor;
 		}
 		for (uint j = 0; j != n; j++) {
 			if (j != i) {
-				double multiplier = -temp_matrix[j]->at(i);
+				double multiplier = -temp_matrix[j][i];
 				for (uint k = 0; k != n; k++) {
-					temp_matrix[j]->at(k) += temp_matrix[i]->at(k) * multiplier;
-					result_matrix[j]->at(k) += result_matrix[i]->at(k) * multiplier;
+					temp_matrix[j][k] += temp_matrix[i][k] * multiplier;
+					result_matrix[j][k] += result_matrix[i][k] * multiplier;
 				}
 			}
 		}
 	}
 	return result_matrix;
+}
+
+vector<uint> matrix_utils::remove_linear_dependence_rows(Matrix &matrix) {
+	vector<uint> removed_rows;
+	//need to prevent swap whole columns, just swap indexes
+	vector<uint> columns(matrix[0].size());
+	for (uint i = 0; i != columns.size(); i++) {
+		columns[i] = i;
+	}
+
+	Matrix temp_matrix;
+	temp_matrix.reserve(matrix.size());
+	for (uint i = 0; i != temp_matrix.size(); i++) {
+		temp_matrix.push_back(vector<double>(matrix[i].begin(), matrix[i].end()));
+	}
+	for (uint i = 0; i != temp_matrix.size(); i++) {
+		uint index_max = i;
+		for (uint j = i + 1; j != temp_matrix[0].size(); j++) {
+			if (abs(temp_matrix[i][columns[index_max]]) < abs(temp_matrix[i][columns[j]])) {
+				index_max = j;
+			}
+		}
+		if (index_max != i) {
+			uint tmp = columns[i];
+			columns[i] = columns[index_max];
+			columns[index_max] = tmp;
+		}
+		index_max = columns[i];
+		if (abs(temp_matrix[i][index_max]) < 1e-9) {
+			temp_matrix.erase(temp_matrix.begin() + i);
+			matrix.erase(matrix.begin() + i);
+			removed_rows.push_back(i);
+			i--;
+			continue;
+		}
+
+		double divizor = temp_matrix[i][index_max];
+		for (uint k = i; k != temp_matrix.size(); k++) {
+			temp_matrix[k][index_max] /= divizor;
+		}
+		for (uint j = 0; j != temp_matrix[0].size(); j++) {
+			if (j != index_max) {
+				double multiplier = -temp_matrix[columns[i]][j];
+				for (uint k = i; k != temp_matrix.size(); k++) {
+					temp_matrix[columns[k]][j] += temp_matrix[columns[k]][i] * multiplier;
+				}
+			}
+		}
+	}
+
+	return removed_rows;
 }

@@ -12,6 +12,8 @@
 #include <fstream>
 #include <functional>
 
+typedef unsigned int uint;
+
 using std::vector;
 using std::pair;
 using std::fstream;
@@ -27,6 +29,7 @@ public:
 	double sum_sqr_improvement();
 	double subtree_leafs_error();
 	int subtree_leafs();
+	uint min_split_count();
 	void is_leaf(bool leaf);
 
 	void split_node();
@@ -61,6 +64,7 @@ private:
 	double subtree_leafs_error_;
 	int subtree_leafs_;
 	bool is_leaf_;
+	uint min_split_count_;
 
 	int split_index_;
 	double split_value_;

@@ -56,15 +56,6 @@ void RegressionTree::init(vector<vector<double>*> *rows) {
 
 	std::random_shuffle(learn_rows->begin(), learn_rows->end());
 
-	vector<vector<double>*> *test_rows = new vector<vector<double>*>();
-	int test_rows_count = learn_rows->size() / 10;
-	//must be at least 10 samples
-	assert(test_rows_count);
-	//move test_rows_count rows into test_rows
-	for (int i = 0; i != test_rows_count; i++) {
-		test_rows->push_back(*learn_rows->rbegin());
-		learn_rows->pop_back();
-	}
 	root_node_ = new TreeNode(learn_rows);
 
 	std::priority_queue<pair<double, TreeNode*> > queue;
@@ -74,7 +65,8 @@ void RegressionTree::init(vector<vector<double>*> *rows) {
 	while (nodes_count < max_nodes_count_) {
 		pair<double, TreeNode*> best_node_to_split = queue.top();
 		queue.pop();
-		if (best_node_to_split.first > 0) {
+		if ((best_node_to_split.first > 0)
+				&& (best_node_to_split.second->min_split_count() >= rows->at(0)->size() * 2)) {
 			cout << best_node_to_split.first << endl;
 			nodes_count += 2;
 			TreeNode *splitting_node = best_node_to_split.second;
@@ -92,42 +84,6 @@ void RegressionTree::init(vector<vector<double>*> *rows) {
 		}
 	}
 
-	vector<pair<double, TreeNode*> > tree_evaluation;
-
-	//find mean_sqr_error evaluation of the best tree && it's leafs
-	double best_subtree_test_mean_sqr_error = evaluate_mean_sqr_error(test_rows);
-	vector<TreeNode*> best_tree_leafs = root_node_->get_leafs();
-
-	cout << "evaluate_trees" << endl;
-	cout << best_subtree_test_mean_sqr_error << endl;
-	cout << best_tree_leafs.size() << endl;
-	cout << "--------------" << endl;
-	while ((tree_evaluation = root_node_->evaluate_cut_tree()).size() > 0) {
-		sort(tree_evaluation.begin(), tree_evaluation.end());
-		double cut_value = tree_evaluation.begin()->first;
-		uint i = 0;
-		cout << cut_value << endl;
-		while (i != tree_evaluation.size() && tree_evaluation[i].first == cut_value) {
-			tree_evaluation[i].second->is_leaf(true);
-			i++;
-		}
-
-		double subtree_mean_sqr_error = evaluate_mean_sqr_error(test_rows);
-		cout << subtree_mean_sqr_error << endl;
-		if (best_subtree_test_mean_sqr_error > subtree_mean_sqr_error) {
-			best_subtree_test_mean_sqr_error = subtree_mean_sqr_error;
-			best_tree_leafs = root_node_->get_leafs();
-			cout << best_tree_leafs.size() << endl;
-		}
-		cout << "--------------" << endl;
-	}
-
-	for (uint i = 0; i != best_tree_leafs.size(); i++) {
-		best_tree_leafs[i]->cut_subtrees();
-	}
-	root_node_->leafs_re_mark();
-
-	delete (test_rows);
 }
 
 void RegressionTree::generate_hme_model(fstream *fmodel) {

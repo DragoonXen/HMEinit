@@ -10,19 +10,20 @@
 
 #include <vector>
 
-typedef unsigned int uint;
-
 using std::vector;
+
+typedef unsigned int uint;
+typedef vector<vector<double> > Matrix;
 
 namespace matrix_utils {
 
-inline bool is_matrix(const vector<vector<double>*> &matrix);
-vector<vector<double>*> create_matrix(uint n, uint m);
-vector<vector<double>*> transpose(const vector<vector<double>*> &matrix);
-vector<vector<double>*> operator *(const vector<vector<double>*> &first,
-		const vector<vector<double>*> &second);
-vector<vector<double>*> inversion(const vector<vector<double>*> &matrix, vector<uint> &removed);
-vector<vector<double>*> pseudo_inversion(const vector<vector<double>*> &matrix);
+inline bool is_matrix(const Matrix &matrix);
+Matrix create_matrix(uint n, uint m);
+Matrix transpose(const Matrix &matrix);
+Matrix operator *(const Matrix &first,
+		const Matrix &second);
+Matrix inversion(const Matrix &matrix);
+vector<uint> remove_linear_dependence_rows(Matrix &matrix);
 
 } //namespace matrix_utils
 
