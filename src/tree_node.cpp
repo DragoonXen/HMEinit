@@ -11,7 +11,6 @@
 
 #include <algorithm>
 #include <iostream>
-#include <math.h>
 
 using std::cout;
 using std::endl;
@@ -258,10 +257,13 @@ void TreeNode::generate_hme_model(fstream* save_stream) {
 				inversion(transposed_x_matrix * x_matrix) * (transposed_x_matrix * d_vector))[0];
 
 		//place zeroes to removed parameters
+		reverse(removed_linear_dependenced_parameters.begin(),
+				removed_linear_dependenced_parameters.end());
 		for (uint i = 0; i != removed_linear_dependenced_parameters.size(); i++) {
 			weight_vector.insert(weight_vector.begin() + removed_linear_dependenced_parameters[i],
 					0);
 		}
+		reverse(removed_parameters.begin(), removed_parameters.end());
 		for (uint i = 0; i != removed_parameters.size(); i++) {
 			weight_vector.insert(weight_vector.begin() + removed_parameters[i], 0);
 		}
@@ -270,34 +272,53 @@ void TreeNode::generate_hme_model(fstream* save_stream) {
 			save_stream->write((char *) &weight_vector[i], sizeof(weight_vector[i]));
 		}
 
-//#define matrix_out
+#define matrix_out
 #ifdef matrix_out
+		freopen("addit1.txt", "a", stdout);
+		cout.setf(std::ios_base::fixed);
+		cout.precision(6);
+		Matrix weight_vector_test;
+		weight_vector_test.push_back(weight_vector);
+		weight_vector_test = transpose(weight_vector_test);
+		double sum = 0;
+
+		for (uint i = 0; i != rows_->size(); i++) {
+			Matrix xVC;
+			xVC.push_back(vector<double>(rows_->at(i)->begin() + 1, rows_->at(i)->end()));
+			xVC[0].push_back(1);
+			Matrix rez = xVC * weight_vector_test;
+			double tmp = rez[0][0] - rows_->at(i)->at(0);
+			sum += tmp * tmp;
+		}
+		cout << sum_sqr_difference_ << ' ' << sum << ' ' << rows_->size() << ' '
+				<< removed_linear_dependenced_parameters.size() << ' ' << removed_parameters.size()
+				<< endl;
+		fclose(stdout);
 		freopen("addit.txt", "a", stdout);
 		cout.setf(std::ios_base::fixed);
 		cout.precision(6);
-		cout << transposed_x_matrix[0].size() << endl;
-		for (uint i = 0; i != transposed_x_matrix.size(); i++) {
-			for (uint j = 0; j != transposed_x_matrix[i].size(); j++) {
-				cout << transposed_x_matrix[i][j] << ' ';
+		cout << x_matrix.size() << '*' << x_matrix[0].size() << endl;
+		for (uint i = 0; i != x_matrix.size(); i++) {
+			cout << d_vector[i][0];
+			for (uint j = 0; j != x_matrix[i].size(); j++) {
+				cout << ' ' << x_matrix[i][j];
 			}
 			cout << endl;
 		}
 		cout << endl;
 
-		Matrix mul_x_matrix = transposed_x_matrix * x_matrix;
-		for (uint i = 0; i != mul_x_matrix.size(); i++) {
-			for (uint j = 0; j != mul_x_matrix[i].size(); j++) {
-				cout << mul_x_matrix[i][j] << ' ';
-			}
-			cout << endl;
-		}
-		cout << endl;
 		for (uint i = 0; i != weight_vector.size(); i++) {
 			cout << weight_vector[i] << ' ';
 		}
 		cout << endl << endl;
 		fclose(stdout);
-		free_memory(mul_x_matrix);
+		freopen("weight.txt", "a", stdout);
+		for (uint i = 0; i != weight_vector.size(); i++) {
+			cout << weight_vector[i] << ' ';
+		}
+		cout << endl;
+		fclose(stdout);
+
 #endif //#ifdef matrix_out
 	} else {
 		//init gate with two oppositely directed vectors

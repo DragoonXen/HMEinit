@@ -8,14 +8,11 @@
 #include "tree_node.h"
 #include <iostream>
 
-#include "matrix_utils.h"
 using std::vector;
 using std::cout;
 using std::endl;
-using matrix_utils::operator *;
 int main(int argc, char* argv[]) {
 	srand(time(NULL));
-
 	char line[5000];
 	std::ifstream f(argv[argc - 1]);
 	vector<vector<double>*> *input_matrix = new vector<vector<double>*>();

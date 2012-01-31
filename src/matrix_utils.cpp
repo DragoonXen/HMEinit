@@ -121,7 +121,7 @@ vector<uint> matrix_utils::remove_linear_dependence_rows(Matrix &matrix) {
 
 	Matrix temp_matrix;
 	temp_matrix.reserve(matrix.size());
-	for (uint i = 0; i != temp_matrix.size(); i++) {
+	for (uint i = 0; i != matrix.size(); i++) {
 		temp_matrix.push_back(vector<double>(matrix[i].begin(), matrix[i].end()));
 	}
 	for (uint i = 0; i != temp_matrix.size(); i++) {
@@ -137,7 +137,7 @@ vector<uint> matrix_utils::remove_linear_dependence_rows(Matrix &matrix) {
 			columns[index_max] = tmp;
 		}
 		index_max = columns[i];
-		if (abs(temp_matrix[i][index_max]) < 1e-9) {
+		if (abs(temp_matrix[i][index_max]) < 1e-7) {
 			temp_matrix.erase(temp_matrix.begin() + i);
 			matrix.erase(matrix.begin() + i);
 			removed_rows.push_back(i);
@@ -145,16 +145,14 @@ vector<uint> matrix_utils::remove_linear_dependence_rows(Matrix &matrix) {
 			continue;
 		}
 
-		double divizor = temp_matrix[i][index_max];
-		for (uint k = i; k != temp_matrix.size(); k++) {
-			temp_matrix[k][index_max] /= divizor;
+		double divisor = temp_matrix[i][index_max];
+		for (uint k = i; k != temp_matrix[0].size(); k++) {
+			temp_matrix[i][columns[k]] /= divisor;
 		}
-		for (uint j = 0; j != temp_matrix[0].size(); j++) {
-			if (j != index_max) {
-				double multiplier = -temp_matrix[columns[i]][j];
-				for (uint k = i; k != temp_matrix.size(); k++) {
-					temp_matrix[columns[k]][j] += temp_matrix[columns[k]][i] * multiplier;
-				}
+		for (uint j = i + 1; j != temp_matrix.size(); j++) {
+			double multiplier = -temp_matrix[j][index_max];
+			for (uint k = i; k != temp_matrix[0].size(); k++) {
+				temp_matrix[j][columns[k]] += temp_matrix[i][columns[k]] * multiplier;
 			}
 		}
 	}
