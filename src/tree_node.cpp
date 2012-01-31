@@ -10,6 +10,7 @@
 #include "matrix_utils.h"
 
 #include <algorithm>
+#include <assert.h>
 #include <iostream>
 
 using std::cout;
@@ -91,7 +92,7 @@ void TreeNode::init() {
 	}
 
 	uint columns_count = rows_->at(0)->size();
-	double min_leafes_sum_sqr_difference = sum_sqr_difference_;
+	double min_leaves_sum_sqr_difference = sum_sqr_difference_;
 
 	//find best dividing onto two parts
 	for (uint i = 1; i != columns_count; i++) {
@@ -114,8 +115,8 @@ void TreeNode::init() {
 						- 2 * step_avg_value_last * (all_sum - first_sum);
 
 				double diff = step_sum_sqr_difference_first + step_sum_sqr_difference_last;
-				if (diff < min_leafes_sum_sqr_difference) {
-					min_leafes_sum_sqr_difference = diff;
+				if (diff < min_leaves_sum_sqr_difference) {
+					min_leaves_sum_sqr_difference = diff;
 					split_value_ = (rows_->at(j)->at(i) + rows_->at(j + 1)->at(i)) / 2;
 					split_index_ = i;
 					min_split_count_ = min((uint) (j + 1), (uint) (rows_->size() - j - 1));
@@ -123,7 +124,7 @@ void TreeNode::init() {
 			}
 		}
 	}
-	sum_sqr_improvement_ = sum_sqr_difference_ - min_leafes_sum_sqr_difference;
+	sum_sqr_improvement_ = sum_sqr_difference_ - min_leaves_sum_sqr_difference;
 }
 
 void TreeNode::split_node() {
@@ -220,19 +221,19 @@ void TreeNode::generate_hme_model(fstream* save_stream) {
 	save_stream->write((char *) &is_leaf_, sizeof(is_leaf_));
 	if (is_leaf_) {
 		Matrix x_matrix;
-		Matrix d_vector;
+		Matrix response_vector;
 		x_matrix.reserve(rows_->size());
-		d_vector.reserve(rows_->size());
+		response_vector.reserve(rows_->size());
 		//divide onto y and x values
 		for (uint i = 0; i != rows_->size(); i++) {
 			vector<double>::iterator it = ++rows_->at(i)->begin();
 			x_matrix.push_back(vector<double>(it, rows_->at(i)->end()));
-			d_vector.push_back(vector<double>(rows_->at(i)->begin(), it));
+			response_vector.push_back(vector<double>(rows_->at(i)->begin(), it));
 		}
 
 		Matrix transposed_x_matrix = transpose(x_matrix);
 		//remove const parameters
-		vector<uint> removed_parameters;
+		vector<uint> removed_const_parameters;
 		for (uint i = 0; i != transposed_x_matrix.size(); i++) {
 			bool ok = false;
 			for (uint j = 1; j != transposed_x_matrix[0].size(); j++) {
@@ -243,18 +244,27 @@ void TreeNode::generate_hme_model(fstream* save_stream) {
 			}
 			if (!ok) {
 				transposed_x_matrix.erase(transposed_x_matrix.begin() + i);
-				removed_parameters.push_back(i);
+				removed_const_parameters.push_back(i + 1); //shift depends on insert const columb
 				--i;
 			}
 		}
+
+		//inserting const column
+		transposed_x_matrix.insert(transposed_x_matrix.begin(),
+				vector<double>(transposed_x_matrix[0].size(), 1.0));
+
 		vector<uint> removed_linear_dependenced_parameters = remove_linear_dependence_rows(
 				transposed_x_matrix);
-
-		transposed_x_matrix.push_back(vector<double>(transposed_x_matrix[0].size(), 1.0));
+		// cann't remove first const column
+		if (removed_linear_dependenced_parameters.size()) {
+			assert(removed_linear_dependenced_parameters[0]);
+		}
 		x_matrix = transpose(transposed_x_matrix);
 
-		vector<double> weight_vector = transpose(
-				inversion(transposed_x_matrix * x_matrix) * (transposed_x_matrix * d_vector))[0];
+		vector<double> weight_vector =
+				transpose(
+						inversion(transposed_x_matrix * x_matrix)
+								* (transposed_x_matrix * response_vector))[0];
 
 		//place zeroes to removed parameters
 		reverse(removed_linear_dependenced_parameters.begin(),
@@ -263,9 +273,9 @@ void TreeNode::generate_hme_model(fstream* save_stream) {
 			weight_vector.insert(weight_vector.begin() + removed_linear_dependenced_parameters[i],
 					0);
 		}
-		reverse(removed_parameters.begin(), removed_parameters.end());
-		for (uint i = 0; i != removed_parameters.size(); i++) {
-			weight_vector.insert(weight_vector.begin() + removed_parameters[i], 0);
+		reverse(removed_const_parameters.begin(), removed_const_parameters.end());
+		for (uint i = 0; i != removed_const_parameters.size(); i++) {
+			weight_vector.insert(weight_vector.begin() + removed_const_parameters[i], 0);
 		}
 
 		for (uint i = 0; i != weight_vector.size(); i++) {
@@ -285,21 +295,21 @@ void TreeNode::generate_hme_model(fstream* save_stream) {
 		for (uint i = 0; i != rows_->size(); i++) {
 			Matrix xVC;
 			xVC.push_back(vector<double>(rows_->at(i)->begin() + 1, rows_->at(i)->end()));
-			xVC[0].push_back(1);
+			xVC[0].insert(xVC[0].begin(), 1);
 			Matrix rez = xVC * weight_vector_test;
 			double tmp = rez[0][0] - rows_->at(i)->at(0);
 			sum += tmp * tmp;
 		}
 		cout << sum_sqr_difference_ << ' ' << sum << ' ' << rows_->size() << ' '
-				<< removed_linear_dependenced_parameters.size() << ' ' << removed_parameters.size()
-				<< endl;
+				<< removed_linear_dependenced_parameters.size() << ' '
+				<< removed_const_parameters.size() << endl;
 		fclose(stdout);
 		freopen("addit.txt", "a", stdout);
 		cout.setf(std::ios_base::fixed);
 		cout.precision(6);
 		cout << x_matrix.size() << '*' << x_matrix[0].size() << endl;
 		for (uint i = 0; i != x_matrix.size(); i++) {
-			cout << d_vector[i][0];
+			cout << response_vector[i][0];
 			for (uint j = 0; j != x_matrix[i].size(); j++) {
 				cout << ' ' << x_matrix[i][j];
 			}

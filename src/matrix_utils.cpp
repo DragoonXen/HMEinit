@@ -146,13 +146,13 @@ vector<uint> matrix_utils::remove_linear_dependence_rows(Matrix &matrix) {
 		}
 
 		double divisor = temp_matrix[i][index_max];
-		for (uint k = i; k != temp_matrix[0].size(); k++) {
-			temp_matrix[i][columns[k]] /= divisor;
+		for (uint k = 0; k != temp_matrix[0].size(); k++) {
+			temp_matrix[i][k] /= divisor;
 		}
 		for (uint j = i + 1; j != temp_matrix.size(); j++) {
 			double multiplier = -temp_matrix[j][index_max];
-			for (uint k = i; k != temp_matrix[0].size(); k++) {
-				temp_matrix[j][columns[k]] += temp_matrix[i][columns[k]] * multiplier;
+			for (uint k = 0; k != temp_matrix[0].size(); k++) {
+				temp_matrix[j][k] += temp_matrix[i][k] * multiplier;
 			}
 		}
 	}
