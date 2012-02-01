@@ -2,7 +2,6 @@
 #include <sstream>
 #include <assert.h>
 #include <stdlib.h>
-#include <time.h>
 #include <vector>
 #include "regression_tree.h"
 #include "tree_node.h"
@@ -12,7 +11,6 @@ using std::vector;
 using std::cout;
 using std::endl;
 int main(int argc, char* argv[]) {
-	srand(time(NULL));
 	char line[5000];
 	std::ifstream f(argv[argc - 1]);
 	vector<vector<double>*> *input_matrix = new vector<vector<double>*>();

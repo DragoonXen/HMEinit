@@ -257,8 +257,9 @@ void TreeNode::generate_hme_model(fstream* save_stream) {
 				transposed_x_matrix);
 		// cann't remove first const column
 		if (removed_linear_dependenced_parameters.size()) {
-			assert(removed_linear_dependenced_parameters[0]);
+			assert(removed_linear_dependenced_parameters[0] > 0);
 		}
+
 		x_matrix = transpose(transposed_x_matrix);
 
 		vector<double> weight_vector =
@@ -266,7 +267,7 @@ void TreeNode::generate_hme_model(fstream* save_stream) {
 						inversion(transposed_x_matrix * x_matrix)
 								* (transposed_x_matrix * response_vector))[0];
 
-		//place zeroes to removed parameters
+		//place zeroes in place of removed parameters
 		reverse(removed_linear_dependenced_parameters.begin(),
 				removed_linear_dependenced_parameters.end());
 		for (uint i = 0; i != removed_linear_dependenced_parameters.size(); i++) {

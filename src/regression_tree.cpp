@@ -6,7 +6,6 @@
  */
 
 #include "regression_tree.h"
-#include <algorithm>
 #include <assert.h>
 #include <queue>
 #include <limits.h>
@@ -54,8 +53,6 @@ void RegressionTree::init(vector<vector<double>*> *rows) {
 	rows_ = new vector<vector<double>*>(rows->begin(), rows->end());
 	vector<vector<double>*> *learn_rows = new vector<vector<double>*>(rows_->begin(), rows_->end());
 
-	std::random_shuffle(learn_rows->begin(), learn_rows->end());
-
 	root_node_ = new TreeNode(learn_rows);
 
 	std::priority_queue<pair<double, TreeNode*> > queue;
@@ -66,7 +63,7 @@ void RegressionTree::init(vector<vector<double>*> *rows) {
 		pair<double, TreeNode*> best_node_to_split = queue.top();
 		queue.pop();
 		if ((best_node_to_split.first > 0)
-				&& (best_node_to_split.second->min_split_count() >= rows->at(0)->size() * 4)) {
+				&& (best_node_to_split.second->min_split_count() >= rows->at(0)->size() * 2)) {
 			cout << best_node_to_split.first << endl;
 			nodes_count += 2;
 			TreeNode *splitting_node = best_node_to_split.second;

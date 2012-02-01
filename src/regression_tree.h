@@ -7,9 +7,10 @@
 
 #ifndef REGRESSIONTREE_H_
 #define REGRESSIONTREE_H_
+#include "tree_node.h"
+
 #include <vector>
 #include <fstream>
-#include "tree_node.h"
 
 using std::vector;
 using std::fstream;
