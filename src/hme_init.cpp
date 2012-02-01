@@ -1,10 +1,8 @@
 #include <fstream>
 #include <sstream>
 #include <assert.h>
-#include <stdlib.h>
 #include <vector>
 #include "regression_tree.h"
-#include "tree_node.h"
 #include <iostream>
 
 using std::vector;
