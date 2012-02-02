@@ -84,7 +84,7 @@ void RegressionTree::init(vector<vector<double>*> *rows) {
 }
 
 void RegressionTree::generate_hme_model(fstream *fmodel) {
-	int x_count = rows_->at(0)->size() - 1;
+	size_t x_count = rows_->at(0)->size();
 	fmodel->write((char*) &x_count, sizeof(x_count));
 	root_node_->generate_hme_model(fmodel);
 }

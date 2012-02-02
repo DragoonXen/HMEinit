@@ -283,7 +283,7 @@ void TreeNode::generate_hme_model(fstream* save_stream) {
 			save_stream->write((char *) &weight_vector[i], sizeof(weight_vector[i]));
 		}
 
-#define matrix_out
+//#define matrix_out
 #ifdef matrix_out
 		freopen("addit1.txt", "a", stdout);
 		cout.setf(std::ios_base::fixed);
