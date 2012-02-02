@@ -59,11 +59,11 @@ void RegressionTree::init(vector<vector<double>*> *rows) {
 	queue.push(make_pair(root_node_->sum_sqr_improvement(), root_node_));
 
 	int nodes_count = 1;
-	while (nodes_count < max_nodes_count_) {
+	while ((queue.size() > 0) && (nodes_count < max_nodes_count_)) {
 		pair<double, TreeNode*> best_node_to_split = queue.top();
 		queue.pop();
 		if ((best_node_to_split.first > 0)
-				&& (best_node_to_split.second->min_split_count() >= rows->at(0)->size() * 2)) {
+				&& (best_node_to_split.second->min_split_count() >= rows->at(0)->size() * 4)) {
 			cout << best_node_to_split.first << endl;
 			nodes_count += 2;
 			TreeNode *splitting_node = best_node_to_split.second;

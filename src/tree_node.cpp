@@ -94,7 +94,7 @@ void TreeNode::init() {
 	uint columns_count = rows_->at(0)->size();
 	double min_leaves_sum_sqr_difference = sum_sqr_difference_;
 
-	//find best dividing onto two parts
+	//find best dividing onto two parts, skip y
 	for (uint i = 1; i != columns_count; i++) {
 		sort(rows_->begin(), rows_->end(), RowsCompare(i));
 
@@ -335,6 +335,8 @@ void TreeNode::generate_hme_model(fstream* save_stream) {
 		//init gate with two oppositely directed vectors
 		double zero = 0;
 		double tmp = -1;
+
+		save_stream->write((char *) &split_value_, sizeof(split_value_));
 		for (int i = 1; i != split_index_; i++) {
 			save_stream->write((char *) &zero, sizeof(zero));
 		}
@@ -342,8 +344,9 @@ void TreeNode::generate_hme_model(fstream* save_stream) {
 		for (uint i = split_index_ + 1; i != rows_->at(0)->size(); i++) {
 			save_stream->write((char *) &zero, sizeof(zero));
 		}
-		save_stream->write((char *) &split_value_, sizeof(split_value_));
 
+		tmp = -split_value_;
+		save_stream->write((char *) &tmp, sizeof(tmp));
 		for (int i = 1; i != split_index_; i++) {
 			save_stream->write((char *) &zero, sizeof(zero));
 		}
@@ -352,8 +355,6 @@ void TreeNode::generate_hme_model(fstream* save_stream) {
 		for (uint i = split_index_ + 1; i != rows_->at(0)->size(); i++) {
 			save_stream->write((char *) &zero, sizeof(zero));
 		}
-		tmp = -split_value_;
-		save_stream->write((char *) &tmp, sizeof(tmp));
 
 		left_child_->generate_hme_model(save_stream);
 		right_child_->generate_hme_model(save_stream);
