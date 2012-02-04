@@ -89,10 +89,10 @@ Matrix matrix_utils::inversion(const Matrix &matrix) {
 			swap(temp_matrix[index_max], temp_matrix[i]);
 			swap(result_matrix[index_max], result_matrix[i]);
 		}
-		if (abs(temp_matrix[index_max][i]) < 1e-9) {
+		/*if (abs(temp_matrix[index_max][i]) < 1e-9) {
 			cout << "det (matrix) == 0" << endl;
 			assert(false);
-		}
+		}*/
 		double divizor = temp_matrix[i][i];
 		for (uint k = 0; k != n; k++) {
 			temp_matrix[i][k] /= divizor;

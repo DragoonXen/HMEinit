@@ -12,6 +12,7 @@
 #include <algorithm>
 #include <assert.h>
 #include <iostream>
+#include <cmath>
 
 using std::cout;
 using std::endl;
@@ -23,7 +24,8 @@ using matrix_utils::inversion;
 using matrix_utils::transpose;
 using matrix_utils::remove_linear_dependence_rows;
 
-TreeNode::TreeNode(vector<vector<double>*> *rows) {
+TreeNode::TreeNode(vector<vector<double>*> *rows, double max_params_correlation, bool debug_output) :
+		max_params_correlation_(max_params_correlation), debug_output_(debug_output) {
 	cout << "rows: " << rows->size() << endl;
 	left_child_ = NULL;
 	right_child_ = NULL;
@@ -141,8 +143,8 @@ void TreeNode::split_node() {
 
 	is_leaf_ = false;
 
-	left_child_ = new TreeNode(left_leaf_rows);
-	right_child_ = new TreeNode(right_leaf_rows);
+	left_child_ = new TreeNode(left_leaf_rows, max_params_correlation_, debug_output_);
+	right_child_ = new TreeNode(right_leaf_rows, max_params_correlation_, debug_output_);
 }
 
 vector<pair<double, TreeNode*> > TreeNode::evaluate_cut_tree() {
@@ -253,6 +255,51 @@ void TreeNode::generate_hme_model(fstream* save_stream) {
 		transposed_x_matrix.insert(transposed_x_matrix.begin(),
 				vector<double>(transposed_x_matrix[0].size(), 1.0));
 
+		vector<uint> korrelation_removed_parameters;
+		if (max_params_correlation_ < 1.0) {
+			//correlation calculate
+			//calculate avg_value
+			vector<double> avg_param_val;
+			avg_param_val.reserve(transposed_x_matrix.size());
+			for (uint i = 0; i != transposed_x_matrix.size(); i++) {
+				double val = 0;
+				for (uint j = 0; j != transposed_x_matrix[0].size(); j++) {
+					val += transposed_x_matrix[i][j];
+				}
+				avg_param_val.push_back(val / transposed_x_matrix[0].size());
+			}
+			//calculate sum_sqr_difference && diff matrix
+			vector<double> sum_sqr_dif;
+			sum_sqr_dif.reserve(transposed_x_matrix.size());
+			Matrix dif_matrix = matrix_utils::create_matrix(transposed_x_matrix.size(),
+					transposed_x_matrix[0].size());
+			for (uint i = 0; i != transposed_x_matrix.size(); i++) {
+				double val = 0;
+				for (uint j = 0; j != transposed_x_matrix[0].size(); j++) {
+					double tmp = transposed_x_matrix[i][j] - avg_param_val[i];
+					dif_matrix[i][j] = tmp;
+					val += tmp * tmp;
+				}
+				sum_sqr_dif.push_back(val);
+			}
+
+			for (uint i = 0; i != transposed_x_matrix.size(); i++) {
+				for (uint j = i + 1; j != transposed_x_matrix.size(); j++) {
+					double val = 0;
+					for (uint k = 0; k != transposed_x_matrix[0].size(); k++) {
+						val += dif_matrix[i][k] * dif_matrix[j][k];
+					}
+					val /= sqrt(sum_sqr_dif[i] * sum_sqr_dif[j]);
+					if (fabs(val) > max_params_correlation_) {
+						korrelation_removed_parameters.push_back(j);
+						dif_matrix.erase(dif_matrix.begin() + j);
+						transposed_x_matrix.erase(transposed_x_matrix.begin() + j);
+						j--;
+					}
+				}
+			}
+		}
+
 		vector<uint> removed_linear_dependenced_parameters = remove_linear_dependence_rows(
 				transposed_x_matrix);
 		// cann't remove first const column
@@ -267,12 +314,18 @@ void TreeNode::generate_hme_model(fstream* save_stream) {
 						inversion(transposed_x_matrix * x_matrix)
 								* (transposed_x_matrix * response_vector))[0];
 
-		//place zeroes in place of removed parameters
+		//place zeroes in place of removed parameters in reverse order
 		reverse(removed_linear_dependenced_parameters.begin(),
 				removed_linear_dependenced_parameters.end());
 		for (uint i = 0; i != removed_linear_dependenced_parameters.size(); i++) {
 			weight_vector.insert(weight_vector.begin() + removed_linear_dependenced_parameters[i],
 					0);
+		}
+		if (max_params_correlation_ < 1.0) {
+			reverse(korrelation_removed_parameters.begin(), korrelation_removed_parameters.end());
+			for (uint i = 0; i != korrelation_removed_parameters.size(); i++) {
+				weight_vector.insert(weight_vector.begin() + korrelation_removed_parameters[i], 0);
+			}
 		}
 		reverse(removed_const_parameters.begin(), removed_const_parameters.end());
 		for (uint i = 0; i != removed_const_parameters.size(); i++) {
@@ -283,74 +336,63 @@ void TreeNode::generate_hme_model(fstream* save_stream) {
 			save_stream->write((char *) &weight_vector[i], sizeof(weight_vector[i]));
 		}
 
-//#define matrix_out
-#ifdef matrix_out
-		freopen("addit1.txt", "a", stdout);
-		cout.setf(std::ios_base::fixed);
-		cout.precision(6);
-		Matrix weight_vector_test;
-		weight_vector_test.push_back(weight_vector);
-		weight_vector_test = transpose(weight_vector_test);
-		double sum = 0;
+		if (debug_output_) {
+			fstream outS("addit1.txt", std::ios_base::out | std::ios_base::app);
+			outS.setf(std::ios_base::fixed);
+			outS.precision(6);
+			Matrix weight_vector_test;
+			weight_vector_test.push_back(weight_vector);
+			weight_vector_test = transpose(weight_vector_test);
+			double sum = 0;
 
-		for (uint i = 0; i != rows_->size(); i++) {
-			Matrix xVC;
-			xVC.push_back(vector<double>(rows_->at(i)->begin() + 1, rows_->at(i)->end()));
-			xVC[0].insert(xVC[0].begin(), 1);
-			Matrix rez = xVC * weight_vector_test;
-			double tmp = rez[0][0] - rows_->at(i)->at(0);
-			sum += tmp * tmp;
-		}
-		cout << sum_sqr_difference_ << ' ' << sum << ' ' << rows_->size() << ' '
-				<< removed_linear_dependenced_parameters.size() << ' '
-				<< removed_const_parameters.size() << endl;
-		fclose(stdout);
-		freopen("addit.txt", "a", stdout);
-		cout.setf(std::ios_base::fixed);
-		cout.precision(6);
-		cout << x_matrix.size() << '*' << x_matrix[0].size() << endl;
-		for (uint i = 0; i != x_matrix.size(); i++) {
-			cout << response_vector[i][0];
-			for (uint j = 0; j != x_matrix[i].size(); j++) {
-				cout << ' ' << x_matrix[i][j];
+			for (uint i = 0; i != rows_->size(); i++) {
+				Matrix xVC;
+				xVC.push_back(vector<double>(rows_->at(i)->begin() + 1, rows_->at(i)->end()));
+				xVC[0].insert(xVC[0].begin(), 1);
+				Matrix rez = xVC * weight_vector_test;
+				double tmp = rez[0][0] - rows_->at(i)->at(0);
+				sum += tmp * tmp;
 			}
-			cout << endl;
-		}
-		cout << endl;
+			outS << sum_sqr_difference_ << ' ' << sum << ' ' << rows_->size() << ' '
+					<< removed_linear_dependenced_parameters.size() << ' '
+					<< korrelation_removed_parameters.size() << ' '
+					<< removed_const_parameters.size() << endl;
+			outS.close();
+			/*outS.open("addit.txt", std::ios_base::out | std::ios_base::app);
+			outS << x_matrix.size() << '*' << x_matrix[0].size() << endl;
+			for (uint i = 0; i != x_matrix.size(); i++) {
+				outS << response_vector[i][0];
+				for (uint j = 0; j != x_matrix[i].size(); j++) {
+					outS << ' ' << x_matrix[i][j];
+				}
+				outS << endl;
+			}
+			outS << endl;
 
-		for (uint i = 0; i != weight_vector.size(); i++) {
-			cout << weight_vector[i] << ' ';
+			for (uint i = 0; i != weight_vector.size(); i++) {
+				outS << weight_vector[i] << ' ';
+			}
+			outS << endl << endl;
+			outS.close();*/
+			outS.open("weight.txt", std::ios_base::out | std::ios_base::app);
+			for (uint i = 0; i != weight_vector.size(); i++) {
+				outS << weight_vector[i] << ' ';
+			}
+			outS << endl;
+			outS.close();
 		}
-		cout << endl << endl;
-		fclose(stdout);
-		freopen("weight.txt", "a", stdout);
-		for (uint i = 0; i != weight_vector.size(); i++) {
-			cout << weight_vector[i] << ' ';
-		}
-		cout << endl;
-		fclose(stdout);
 
-#endif //#ifdef matrix_out
 	} else {
 		//init gate with two oppositely directed vectors
+		double vector_length = 1;
 		double zero = 0;
-		double tmp = -1;
+		double tmp = split_value_ * vector_length;
 
 		save_stream->write((char *) &split_value_, sizeof(split_value_));
 		for (int i = 1; i != split_index_; i++) {
 			save_stream->write((char *) &zero, sizeof(zero));
 		}
-		save_stream->write((char *) &tmp, sizeof(tmp));
-		for (uint i = split_index_ + 1; i != rows_->at(0)->size(); i++) {
-			save_stream->write((char *) &zero, sizeof(zero));
-		}
-
-		tmp = -split_value_;
-		save_stream->write((char *) &tmp, sizeof(tmp));
-		for (int i = 1; i != split_index_; i++) {
-			save_stream->write((char *) &zero, sizeof(zero));
-		}
-		tmp = 1;
+		tmp = -vector_length;
 		save_stream->write((char *) &tmp, sizeof(tmp));
 		for (uint i = split_index_ + 1; i != rows_->at(0)->size(); i++) {
 			save_stream->write((char *) &zero, sizeof(zero));

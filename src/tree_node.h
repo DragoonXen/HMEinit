@@ -20,7 +20,8 @@ using std::fstream;
 
 class TreeNode {
 public:
-	TreeNode(vector<vector<double>*> *rows);
+	TreeNode(vector<vector<double>*> *rows, double max_params_korrelation_ = 1.0,
+			bool debug_output_ = false);
 	virtual ~TreeNode();
 
 	TreeNode* left_child();
@@ -62,12 +63,15 @@ private:
 	double sum_sqr_difference_;
 	double sum_sqr_improvement_;
 	double subtree_leafs_error_;
+	double max_params_correlation_;
+	bool debug_output_;
 	int subtree_leafs_;
 	bool is_leaf_;
 	uint min_split_count_;
 
 	int split_index_;
 	double split_value_;
+
 };
 
 #endif /* TREENODE_H_ */
