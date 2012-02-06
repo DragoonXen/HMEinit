@@ -72,7 +72,8 @@ int main(int argc, char* argv[]) {
 	f.close();
 
 	RegressionTree tree(input_matrix, max_nodes,
-			min_rows_depends_on_params_count_multiplyer * input_matrix->at(0)->size(), skip_on_min_rows_achieve, debug_output);
+			min_rows_depends_on_params_count_multiplyer * input_matrix->at(0)->size(),
+			skip_on_min_rows_achieve, debug_output);
 	std::fstream fmodel(model_file.c_str(), std::ios_base::binary | std::ios_base::out);
 	tree.generate_hme_model(&fmodel);
 	fmodel.close();
