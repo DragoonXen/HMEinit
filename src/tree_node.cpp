@@ -7,8 +7,6 @@
 
 #include "tree_node.h"
 
-#include "matrix_utils.h"
-
 #include <algorithm>
 #include <assert.h>
 #include <iostream>
@@ -22,11 +20,6 @@ using std::min;
 using std::reverse;
 using std::copy;
 using perceptron::BackpropagationPerceptron;
-
-using matrix_utils::operator *;
-using matrix_utils::inversion;
-using matrix_utils::transpose;
-using matrix_utils::remove_linear_dependence_rows;
 
 TreeNode::TreeNode(vector<vector<double>*> *rows, double max_params_correlation, bool debug_output) :
 		max_params_correlation_(max_params_correlation), debug_output_(debug_output) {
