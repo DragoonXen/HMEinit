@@ -15,7 +15,6 @@ using std::string;
 
 int main(int argc, char* argv[]) {
 	cout << "usage: " << endl << "-d : enable debug output" << endl
-			<< "-k [double] : max parameters correlation (before linear regression build)" << endl
 			<< "-s : enable skip on minimum leaf rows achivement" << endl
 			<< "-m [double] : set minimum  leaf rows depends on parameters (multiplier)" << endl
 			<< "-data [string] : data filename" << endl << "-model [string] : model filename"
@@ -25,17 +24,10 @@ int main(int argc, char* argv[]) {
 	uint max_nodes = 150;
 	double min_rows_depends_on_params_count_multiplyer = 4;
 	bool skip_on_min_rows_achieve = false;
-	double max_correlation = 1.0;
 	bool debug_output = false;
 	for (int i = 0; i != argc; i++) {
 		if (strcmp("-d", argv[i]) == 0) {
 			debug_output = true;
-		} else if (strcmp("-k", argv[i]) == 0) {
-			++i;
-			assert(i < argc);
-			std::stringstream sstr;
-			sstr << argv[i];
-			sstr >> max_correlation;
 		} else if (strcmp("-s", argv[i]) == 0) {
 			skip_on_min_rows_achieve = true;
 		} else if (strcmp("-m", argv[i]) == 0) {
@@ -80,7 +72,7 @@ int main(int argc, char* argv[]) {
 	f.close();
 
 	RegressionTree tree(input_matrix, max_nodes,
-			min_rows_depends_on_params_count_multiplyer * input_matrix->at(0)->size(), skip_on_min_rows_achieve, max_correlation, debug_output);
+			min_rows_depends_on_params_count_multiplyer * input_matrix->at(0)->size(), skip_on_min_rows_achieve, debug_output);
 	std::fstream fmodel(model_file.c_str(), std::ios_base::binary | std::ios_base::out);
 	tree.generate_hme_model(&fmodel);
 	fmodel.close();

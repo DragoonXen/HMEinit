@@ -17,11 +17,9 @@ using std::pair;
 using std::make_pair;
 
 RegressionTree::RegressionTree(vector<vector<double>*> *rows, uint max_nodes_count,
-		uint min_rows_per_leaf, bool skip_on_min_rows_achieve, double max_params_correlation,
-		bool debug_output) {
+		uint min_rows_per_leaf, bool skip_on_min_rows_achieve, bool debug_output) {
 	min_rows_per_leaf_ = min_rows_per_leaf;
 	skip_on_min_rows_achieve_ = skip_on_min_rows_achieve;
-	max_params_correlation_ = max_params_correlation;
 	assert(max_nodes_count > 0);
 	if ((max_nodes_count & 1) == 0) { //binary regression tree cann't have even number of nodes
 		--max_nodes_count;
@@ -34,7 +32,6 @@ RegressionTree::RegressionTree(vector<vector<double>*> *rows, uint max_nodes_cou
 		bool skip_on_min_rows_achieve) :
 		skip_on_min_rows_achieve_(skip_on_min_rows_achieve), min_rows_per_leaf_(
 				rows->at(0)->size() * 4) {
-	max_params_correlation_ = 1.0;
 	assert(max_nodes_count > 0);
 	if ((max_nodes_count & 1) == 0) { //binary regression tree cann't have even number of nodes
 		--max_nodes_count;
@@ -46,7 +43,6 @@ RegressionTree::RegressionTree(vector<vector<double>*> *rows, uint max_nodes_cou
 RegressionTree::RegressionTree(vector<vector<double>*> *rows, bool skip_on_min_rows_achieve) :
 		max_nodes_count_(std::numeric_limits<uint>::max()), skip_on_min_rows_achieve_(
 				skip_on_min_rows_achieve), min_rows_per_leaf_(rows->at(0)->size() * 4) {
-	max_params_correlation_ = 1.0;
 	init(rows);
 }
 
@@ -73,7 +69,7 @@ void RegressionTree::init(vector<vector<double>*> *rows, bool debug_output) {
 	rows_ = new vector<vector<double>*>(rows->begin(), rows->end());
 	vector<vector<double>*> *learn_rows = new vector<vector<double>*>(rows_->begin(), rows_->end());
 
-	root_node_ = new TreeNode(learn_rows, max_params_correlation_, debug_output);
+	root_node_ = new TreeNode(learn_rows, debug_output);
 
 	std::priority_queue<pair<double, TreeNode*> > queue;
 	queue.push(make_pair(root_node_->sum_sqr_improvement(), root_node_));

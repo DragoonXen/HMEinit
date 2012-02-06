@@ -7,12 +7,13 @@
 
 #include "tree_node.h"
 
+#include "perceptron/backpropagation_perceptron.h"
+
 #include <algorithm>
 #include <assert.h>
 #include <iostream>
 #define _USE_MATH_DEFINES
 #include <math.h>
-#include "perceptron/backpropagation_perceptron.h"
 
 using std::cout;
 using std::endl;
@@ -21,8 +22,8 @@ using std::reverse;
 using std::copy;
 using perceptron::BackpropagationPerceptron;
 
-TreeNode::TreeNode(vector<vector<double>*> *rows, double max_params_correlation, bool debug_output) :
-		max_params_correlation_(max_params_correlation), debug_output_(debug_output) {
+TreeNode::TreeNode(vector<vector<double>*> *rows, bool debug_output) :
+		debug_output_(debug_output) {
 	cout << "rows: " << rows->size() << endl;
 	left_child_ = NULL;
 	right_child_ = NULL;
@@ -140,8 +141,8 @@ void TreeNode::split_node() {
 
 	is_leaf_ = false;
 
-	left_child_ = new TreeNode(left_leaf_rows, max_params_correlation_, debug_output_);
-	right_child_ = new TreeNode(right_leaf_rows, max_params_correlation_, debug_output_);
+	left_child_ = new TreeNode(left_leaf_rows, debug_output_);
+	right_child_ = new TreeNode(right_leaf_rows, debug_output_);
 }
 
 vector<pair<double, TreeNode*> > TreeNode::evaluate_cut_tree() {
