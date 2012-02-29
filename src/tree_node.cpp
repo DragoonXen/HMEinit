@@ -101,24 +101,15 @@ void TreeNode::init() {
 		sort(rows_->begin(), rows_->end(), RowsCompare(i));
 
 		double first_sum = 0;
-		double first_sum_sqrs = 0;
 		for (uint j = 0; j + 1 != rows_->size(); j++) {
 			first_sum += rows_->at(j)->at(0);
-			first_sum_sqrs += rows_->at(j)->at(0) * rows_->at(j)->at(0);
 
-			if (rows_->at(j)->at(i) != rows_->at(j + 1)->at(i)) { //if can split at this point
-				double step_avg_value_first = first_sum / (j + 1);
-				double step_sum_sqr_difference_first = step_avg_value_first * step_avg_value_first
-						* (j + 1) + first_sum_sqrs - 2 * step_avg_value_first * first_sum;
-
-				double step_avg_value_last = (all_sum - first_sum) / (rows_->size() - j - 1);
-				double step_sum_sqr_difference_last = step_avg_value_last * step_avg_value_last
-						* (rows_->size() - j - 1) + all_sum_sqrs - first_sum_sqrs
-						- 2 * step_avg_value_last * (all_sum - first_sum);
-
-				double diff = step_sum_sqr_difference_first + step_sum_sqr_difference_last;
-				if (diff < min_leaves_sum_sqr_difference) {
-					min_leaves_sum_sqr_difference = diff;
+			if (rows_->at(j)->at(i) != rows_->at(j + 1)->at(i)) { //if (can split at this point)
+				double leaves_sqr_sum_difference = all_sum_sqrs 
+					- first_sum * first_sum / (j + 1) 
+					- (all_sum - first_sum) * (all_sum - first_sum) / (rows_->size() - j - 1);
+				if (leaves_sqr_sum_difference < min_leaves_sum_sqr_difference) {
+					min_leaves_sum_sqr_difference = leaves_sqr_sum_difference;
 					split_value_ = (rows_->at(j)->at(i) + rows_->at(j + 1)->at(i)) / 2;
 					split_index_ = i;
 					min_split_count_ = min((uint) (j + 1), (uint) (rows_->size() - j - 1));
@@ -388,7 +379,7 @@ void TreeNode::generate_hme_model(fstream* save_stream) {
 		double zero = 0;
 		double tmp = split_value_ * vector_length;
 
-		save_stream->write((char *) &split_value_, sizeof(split_value_));
+		save_stream->write((char *) &tmp, sizeof(tmp));
 		for (int i = 1; i != split_index_; i++) {
 			save_stream->write((char *) &zero, sizeof(zero));
 		}
