@@ -13,6 +13,7 @@
 #include <assert.h>
 #include <iostream>
 #include <cmath>
+#include <omp.h>
 
 using std::cout;
 using std::endl;
@@ -88,35 +89,49 @@ void TreeNode::init() {
 	avg_value_ = all_sum / rows_->size();
 	sum_sqr_difference_ = avg_value_ * avg_value_ * rows_->size() + all_sum_sqrs
 			- 2 * avg_value_ * all_sum;
+
 	// no reason to search slit node if all learn samples have same value
 	if (sum_sqr_difference_ == 0) {
 		return;
 	}
 
-	uint columns_count = rows_->at(0)->size();
+	const uint columns_count = rows_->at(0)->size();
 	double min_leaves_sum_sqr_difference = sum_sqr_difference_;
 
 	//find best dividing onto two parts, skip y
-	for (uint i = 1; i != columns_count; i++) {
-		sort(rows_->begin(), rows_->end(), RowsCompare(i));
+#pragma omp parallel
+    {
+        vector<vector<double>*> rows;
+        rows.assign(rows_->begin(), rows_->end());
+#pragma omp for
+        for (uint i = 1; i < columns_count; ++i) {
+            sort(rows.begin(), rows.end(), RowsCompare(i));
 
-		double first_sum = 0;
-		for (uint j = 0; j + 1 != rows_->size(); j++) {
-			first_sum += rows_->at(j)->at(0);
+            double first_sum = 0;
+            for (uint j = 0; j + 1 != rows.size(); j++) {
+                first_sum += rows[j]->at(0);
 
-			if (rows_->at(j)->at(i) != rows_->at(j + 1)->at(i)) { //if (can split at this point)
-				double leaves_sqr_sum_difference = all_sum_sqrs 
-					- first_sum * first_sum / (j + 1) 
-					- (all_sum - first_sum) * (all_sum - first_sum) / (rows_->size() - j - 1);
-				if (leaves_sqr_sum_difference < min_leaves_sum_sqr_difference) {
-					min_leaves_sum_sqr_difference = leaves_sqr_sum_difference;
-					split_value_ = (rows_->at(j)->at(i) + rows_->at(j + 1)->at(i)) / 2;
-					split_index_ = i;
-					min_split_count_ = min((uint) (j + 1), (uint) (rows_->size() - j - 1));
-				}
-			}
-		}
-	}
+                if (rows[j]->at(i) != rows[j + 1]->at(i)) { //if (can split at this point)
+                    double leaves_sqr_sum_difference = all_sum_sqrs
+                            - first_sum * first_sum / (j + 1)
+                            - (all_sum - first_sum) * (all_sum - first_sum)
+                                    / (rows.size() - j - 1);
+#pragma omp critical
+                    if (leaves_sqr_sum_difference
+                            < min_leaves_sum_sqr_difference) {
+                        min_leaves_sum_sqr_difference =
+                                leaves_sqr_sum_difference;
+                        split_value_ = (rows[j]->at(i) + rows[j + 1]->at(i))
+                                / 2;
+                        split_index_ = i;
+                        min_split_count_ = min(
+                                (uint) (j + 1),
+                                (uint) (rows.size() - j - 1));
+                    }
+                }
+            }
+        }
+    }
 	sum_sqr_improvement_ = sum_sqr_difference_ - min_leaves_sum_sqr_difference;
 }
 

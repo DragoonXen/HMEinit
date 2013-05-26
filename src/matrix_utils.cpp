@@ -10,6 +10,7 @@
 #include <assert.h>
 #include <iostream>
 #include <cmath>
+#include <omp.h>
 
 using std::abs;
 using std::cout;
@@ -28,13 +29,8 @@ inline bool matrix_utils::is_matrix(const Matrix &matrix) {
 }
 
 Matrix matrix_utils::create_matrix(uint rows, uint columns) {
-	Matrix result_matrix;
-	result_matrix.reserve(rows);
-	for (uint i = 0; i != rows; i++) {
-		vector<double> tmp(columns);
-		result_matrix.push_back(tmp);
-	}
-	return result_matrix;
+    vector<double> tmp(columns);
+	return Matrix(rows, tmp);
 }
 
 Matrix matrix_utils::transpose(const Matrix &matrix) {
@@ -54,7 +50,9 @@ Matrix matrix_utils::operator *(const Matrix &first, const Matrix &second) {
 	assert(first[0].size() == second.size());
 	uint n(first.size()), m(second[0].size()), l(second.size());
 	Matrix result_matrix = create_matrix(n, m);
-	for (uint i = 0; i != n; i++) {
+#pragma omp parallel
+#pragma omp for
+	for (uint i = 0; i < n; i++) {
 		for (uint j = 0; j != m; j++) {
 			double result = 0;
 			for (uint k = 0; k != l; k++) {
